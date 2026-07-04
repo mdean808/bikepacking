@@ -21,5 +21,12 @@
 		"tailwindcss": "^4.3.0",
 		"typescript": "^6.0.3",
 		"vite": "^8.0.16"
+	},
+	"dependencies": {
+		"@tmcw/togeojson": "^7.1.2",
+		"@types/geojson": "^7946.0.16",
+		"@xmldom/xmldom": "^0.9.10",
+		"maplibre-gl": "^5.24.0",
+		"svelte-maplibre-gl": "^2.0.1"
 	}
 }
