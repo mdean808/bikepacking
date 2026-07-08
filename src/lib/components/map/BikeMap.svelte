@@ -1,9 +1,8 @@
 <script lang="ts">
   import { bbox } from '@turf/bbox';
-  import { TRIPS } from '$lib/trip';
+  import type { Trip } from '$lib/trip';
   import { DAY_COLORS, getRouteStart } from '$lib/geo';
   import Map from './Map.svelte';
-  import TripSelect from './TripSelect.svelte';
   import DayRoute from './DayRoute.svelte';
   import DayMarker from './DayMarker.svelte';
   import ImageMarker from './ImageMarker.svelte';
@@ -11,8 +10,7 @@
   import RouteModal from './RouteModal.svelte';
   import type { Image } from './types.js';
 
-  let selectedTripName: string = $state(TRIPS[0].name);
-  const selectedTrip = $derived(TRIPS.find((t) => t.name === selectedTripName) ?? TRIPS[0]);
+  const { images, trip }: { images: Image[]; trip: Trip } = $props();
 
   let cursor: string = $state('');
 
@@ -21,11 +19,17 @@
   // marker's mouseenter and clear the hovered state. OR-ing them prevents that.
   let layerHoveredIndex: number | null = $state(null);
   let markerHoveredIndex: number | null = $state(null);
-  const hoveredDayIndex = $derived(markerHoveredIndex ?? layerHoveredIndex);
+  // Image markers are DOM overlays that can sit on top of route lines. While one
+  // is hovered it must win over the route underneath — suppress route hover
+  // highlighting and block the route modal so images take precedence.
+  let imageHovered: boolean = $state(false);
+  const hoveredDayIndex = $derived(
+    imageHovered ? null : (markerHoveredIndex ?? layerHoveredIndex)
+  );
 
   const fullGeoJson = $derived({
     type: 'FeatureCollection' as const,
-    features: selectedTrip.geoJSON.flatMap((fc) => fc.features)
+    features: trip.geoJSON.flatMap((fc) => fc.features)
   });
 
   const bounds = $derived(
@@ -33,16 +37,6 @@
   );
 
   const color = (i: number) => DAY_COLORS[i % DAY_COLORS.length];
-
-  // Image modal
-  const images: Image[] = [
-    {
-      loc: { lng: -123, lat: 49 },
-      url: '',
-      title: 'No hands',
-      description: 'Look mom!'
-    }
-  ];
 
   let modalImage: Image = $state({} as Image);
   let modalOpen: boolean = $state(false);
@@ -55,20 +49,30 @@
   let routeModalOpen: boolean = $state(false);
   let selectedDayIndex: number | null = $state(null);
   const openRoute = (i: number) => {
+    if (imageHovered) return;
     selectedDayIndex = i;
     routeModalOpen = true;
   };
 </script>
 
-<TripSelect bind:value={selectedTripName} trips={TRIPS} />
-
 <Map bind:cursor {bounds}>
   {#each images as image}
-    <ImageMarker {image} onselect={openImageModal} />
+    <ImageMarker
+      {image}
+      onselect={openImageModal}
+      onhover={() => {
+        imageHovered = true;
+        cursor = 'pointer';
+      }}
+      onleave={() => {
+        imageHovered = false;
+        cursor = '';
+      }}
+    />
   {/each}
 
-  {#each selectedTrip.geoJSON as dayGeoJson, i}
-    {@const offset = (i - (selectedTrip.geoJSON.length - 1) / 2) * 2}
+  {#each trip.geoJSON as dayGeoJson, i}
+    {@const offset = (i - (trip.geoJSON.length - 1) / 2) * 2}
     <DayRoute
       data={dayGeoJson}
       index={i}

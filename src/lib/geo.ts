@@ -3,13 +3,13 @@ import { center } from '@turf/center';
 import type { FeatureCollection, GeoJSON } from 'geojson';
 
 export const DAY_COLORS = [
-  '#e63946',
-  '#2a9d8f',
-  '#f72585',
-  '#c0ca33',
-  '#264653',
-  '#6a4c93',
-  '#1982c4'
+  '#E63946', // red
+  '#F3722C', // orange
+  '#F9C74F', // gold
+  '#43AA8B', // teal green
+  '#4361EE', // blue
+  '#7209B7', // purple
+  '#F72585' // pink/magenta
 ];
 
 // First coordinate of the first (multi)line in a collection — the route's start point.
@@ -23,13 +23,4 @@ export const getRouteStart = (fc: FeatureCollection): [number, number] | null =>
     }
   }
   return null;
-};
-
-export const getGeoCenter = (geoJson: GeoJSON) => {
-  // bbox center — [lng, lat]
-  const [minX, minY, maxX, maxY] = bbox(geoJson);
-  const bboxCenter: [number, number] = [(minX + maxX) / 2, (minY + maxY) / 2];
-
-  // or geometric centroid
-  const centroidPoint = center(geoJson).geometry.coordinates as [number, number];
 };

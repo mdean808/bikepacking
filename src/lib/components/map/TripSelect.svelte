@@ -4,12 +4,13 @@
   interface Props {
     value: string;
     trips: { name: string }[];
+    onValueChange?: (value: string) => void;
   }
 
-  let { value = $bindable(), trips }: Props = $props();
+  let { value = $bindable(), trips, onValueChange }: Props = $props();
 </script>
 
-<Select.Root type="single" bind:value>
+<Select.Root type="single" bind:value {onValueChange}>
   <Select.Trigger class="w-45">{value}</Select.Trigger>
   <Select.Content>
     {#each trips as trip}

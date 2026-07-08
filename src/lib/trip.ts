@@ -19,7 +19,15 @@ const trip = (folder: string): FeatureCollection[] =>
     .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
     .map(([, raw]) => toGeoJSON(raw));
 
-export const TRIPS = [
+export type Trip = {
+  name: string;
+  description: string;
+  date: Date;
+  album: string;
+  geoJSON: FeatureCollection[];
+};
+
+export const TRIPS: Trip[] = [
   {
     name: 'Haida Gwaii',
     description: 'Bikepacking trip to haida gwaii',
