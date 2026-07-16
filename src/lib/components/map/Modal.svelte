@@ -5,10 +5,12 @@
 
   interface Props {
     open?: boolean;
+    /** Tailwind max-width class for the panel. */
+    maxWidth?: string;
     children?: Snippet;
   }
 
-  let { open = $bindable(false), children }: Props = $props();
+  let { open = $bindable(false), maxWidth = 'max-w-5xl', children }: Props = $props();
 </script>
 
 {#if open}
@@ -21,7 +23,7 @@
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+      class="relative h-[85vh] max-h-[85vh] w-full {maxWidth} overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
       transition:scale={{ duration: 200, start: 0.05 }}
       onclick={(e) => e.stopPropagation()}
     >

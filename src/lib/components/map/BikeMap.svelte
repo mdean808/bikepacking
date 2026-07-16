@@ -23,13 +23,11 @@
   // is hovered it must win over the route underneath — suppress route hover
   // highlighting and block the route modal so images take precedence.
   let imageHovered: boolean = $state(false);
-  const hoveredDayIndex = $derived(
-    imageHovered ? null : (markerHoveredIndex ?? layerHoveredIndex)
-  );
+  const hoveredDayIndex = $derived(imageHovered ? null : (markerHoveredIndex ?? layerHoveredIndex));
 
   const fullGeoJson = $derived({
     type: 'FeatureCollection' as const,
-    features: trip.geoJSON.flatMap((fc) => fc.features)
+    features: trip.days.flatMap((day) => day.geoJSON.features)
   });
 
   const bounds = $derived(
@@ -59,6 +57,7 @@
   {#each images as image}
     <ImageMarker
       {image}
+      dimmed={hoveredDayIndex !== null}
       onselect={openImageModal}
       onhover={() => {
         imageHovered = true;
@@ -71,8 +70,9 @@
     />
   {/each}
 
-  {#each trip.geoJSON as dayGeoJson, i}
-    {@const offset = (i - (trip.geoJSON.length - 1) / 2) * 2}
+  {#each trip.days as day, i}
+    {@const dayGeoJson = day.geoJSON}
+    {@const offset = (i - (trip.days.length - 1) / 2) * 2}
     <DayRoute
       data={dayGeoJson}
       index={i}
@@ -106,4 +106,8 @@
 </Map>
 
 <ImageModal bind:open={modalOpen} image={modalImage} />
-<RouteModal bind:open={routeModalOpen} dayIndex={selectedDayIndex} />
+<RouteModal
+  bind:open={routeModalOpen}
+  dayIndex={selectedDayIndex}
+  day={selectedDayIndex !== null ? trip.days[selectedDayIndex] : null}
+/>

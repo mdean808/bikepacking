@@ -19,20 +19,41 @@ const trip = (folder: string): FeatureCollection[] =>
     .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
     .map(([, raw]) => toGeoJSON(raw));
 
+export type Day = {
+  title: string;
+  description: string;
+  geoJSON: FeatureCollection;
+};
+
 export type Trip = {
   name: string;
   description: string;
   date: Date;
   album: string;
-  geoJSON: FeatureCollection[];
+  days: Day[];
 };
+
+// Zip hand-authored day metadata with the GPX tracks loaded from the folder,
+// matched by order (day_1 → meta[0], …). Missing metadata falls back to a
+// generic title so an added GPX file never breaks the build.
+const buildDays = (folder: string, meta: Omit<Day, 'geoJSON'>[]): Day[] =>
+  trip(folder).map((geoJSON, i) => ({
+    title: meta[i]?.title ?? `Day ${i + 1}`,
+    description: meta[i]?.description ?? '',
+    geoJSON
+  }));
 
 export const TRIPS: Trip[] = [
   {
     name: 'Haida Gwaii',
     description: 'Bikepacking trip to haida gwaii',
     date: new Date('2025-07-01'),
-    album: '9b266407-0fb9-43af-9c49-ae67c3aaeea8',
-    geoJSON: trip('haida_gwaii')
+    album: '208dc9a4-e56a-4d97-b927-e661a0e1390e',
+    days: buildDays('haida_gwaii', [
+      { title: 'Day 1', description: 'Add a description for this day.' },
+      { title: 'Day 2', description: 'Add a description for this day.' },
+      { title: 'Day 3', description: 'Add a description for this day.' },
+      { title: 'Day 4', description: 'Add a description for this day.' }
+    ])
   }
 ];

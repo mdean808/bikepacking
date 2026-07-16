@@ -2,14 +2,16 @@ import { bbox } from '@turf/bbox';
 import { center } from '@turf/center';
 import type { FeatureCollection, GeoJSON } from 'geojson';
 
+// Ordered so consecutive days never share a hue family — each neighbouring pair
+// is at least ~75° apart on the colour wheel, which keeps adjacent routes legible.
 export const DAY_COLORS = [
-  '#E63946', // red
   '#F3722C', // orange
-  '#F9C74F', // gold
-  '#43AA8B', // teal green
   '#4361EE', // blue
-  '#7209B7', // purple
-  '#F72585' // pink/magenta
+  '#E63946', // red
+  '#43AA8B', // teal green
+  '#F72585', // pink/magenta
+  '#F9C74F', // gold
+  '#7209B7' // purple
 ];
 
 // First coordinate of the first (multi)line in a collection — the route's start point.

@@ -8,16 +8,31 @@
     cursor?: string;
     /** [minX, minY, maxX, maxY] — the map fits to this whenever it changes. */
     bounds?: [number, number, number, number] | null;
-    style?: string;
+    style?: string | maplibregl.StyleSpecification;
     class?: string;
     children?: Snippet;
   }
+
+  // Google hybrid tiles: satellite imagery with roads and labels baked in.
+  // Base https://madewithmaplibre.com/basemaps/styles/google-satellite with lyrs=y.
+  const satelliteWithRoads: maplibregl.StyleSpecification = {
+    version: 8,
+    sources: {
+      'google-hybrid': {
+        type: 'raster',
+        tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+        tileSize: 256,
+        attribution: '© Google'
+      }
+    },
+    layers: [{ id: 'google-hybrid', type: 'raster', source: 'google-hybrid' }]
+  };
 
   let {
     map = $bindable(),
     cursor = $bindable(''),
     bounds = null,
-    style = 'https://api.jawg.io/styles/jawg-streets.json?access-token=Ii5PqKu9fD0APrg6DdjWKA9WRj9LAw6I4G4MtxzWSW0u8au1nrLDvwc4ekYMZ3Dc',
+    style = satelliteWithRoads,
     class: className = 'h-full',
     children
   }: Props = $props();
@@ -33,7 +48,7 @@
       doFit();
     } else {
       map.once('load', doFit);
-      return () => map!.off('load', doFit);
+      return () => map?.off('load', doFit);
     }
   });
 </script>
