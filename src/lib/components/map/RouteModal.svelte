@@ -4,7 +4,7 @@
   import DayRoute from './DayRoute.svelte';
   import DayMarker from './DayMarker.svelte';
   import { dayColor, getRouteStart, routeBounds } from '$lib/geo';
-  import type { Day } from '$lib/trip';
+  import type { Day } from '$lib/trips';
 
   interface Props {
     open?: boolean;

@@ -1,6 +1,6 @@
 import { bbox } from '@turf/bbox';
 import type { FeatureCollection, Position } from 'geojson';
-import type { Day } from '$lib/trip';
+import type { Day } from '$lib/trips';
 import type { Image } from '$lib/components/map/types';
 
 // Ordered so consecutive days never share a hue family — each neighbouring pair

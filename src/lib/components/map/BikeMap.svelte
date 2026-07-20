@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Trip } from '$lib/trip';
+  import type { Trip } from '$lib/trips';
   import {
     dayColor,
     dayLineOffset,
