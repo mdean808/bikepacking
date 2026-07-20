@@ -13,22 +13,13 @@
   import ImageMarker from './ImageMarker.svelte';
   import ImageModal from './ImageModal.svelte';
   import RouteModal from './RouteModal.svelte';
+  import { createHoverState } from './hover.svelte.js';
   import type { Image } from './types.js';
 
   const { images, trip }: { images: Image[]; trip: Trip } = $props();
 
-  let cursor: string = $state('');
-
-  // Track layer and marker hover separately — when the mouse moves onto a marker
-  // the map canvas fires mouseleave for the layer, which would race with the
-  // marker's mouseenter and clear the hovered state. OR-ing them prevents that.
-  let layerHoveredIndex: number | null = $state(null);
-  let markerHoveredIndex: number | null = $state(null);
-  // Image markers are DOM overlays that can sit on top of route lines. While one
-  // is hovered it must win over the route underneath — suppress route hover
-  // highlighting and block the route modal so images take precedence.
-  let imageHovered: boolean = $state(false);
-  const hoveredDayIndex = $derived(imageHovered ? null : (markerHoveredIndex ?? layerHoveredIndex));
+  // Owns the route / day-marker / image-marker hover precedence and the cursor.
+  const hover = createHoverState();
 
   const fullGeoJson = $derived({
     type: 'FeatureCollection' as const,
@@ -53,13 +44,13 @@
   let routeModalOpen: boolean = $state(false);
   let selectedDayIndex: number | null = $state(null);
   const openRoute = (i: number) => {
-    if (imageHovered) return;
+    if (!hover.canOpenRoute) return;
     selectedDayIndex = i;
     routeModalOpen = true;
   };
 </script>
 
-<Map bind:cursor {bounds}>
+<Map cursor={hover.cursor} {bounds}>
   {#each images as image (image.thumbnail)}
     {@const loc = image.loc}
     <!-- Ungeotagged photos get no marker. They previously rendered at the -1/-1
@@ -69,16 +60,10 @@
       <ImageMarker
         {image}
         {loc}
-        dimmed={hoveredDayIndex !== null}
+        dimmed={hover.anyDayHovered}
         onselect={openImageModal}
-        onhover={() => {
-          imageHovered = true;
-          cursor = 'pointer';
-        }}
-        onleave={() => {
-          imageHovered = false;
-          cursor = '';
-        }}
+        onhover={() => hover.enterImage()}
+        onleave={() => hover.leaveImage()}
       />
     {/if}
   {/each}
@@ -91,16 +76,10 @@
       index={i}
       color={dayColor(i)}
       {offset}
-      hovered={hoveredDayIndex === i}
-      dimmed={hoveredDayIndex !== null && hoveredDayIndex !== i}
-      onhover={(idx) => {
-        layerHoveredIndex = idx;
-        cursor = 'pointer';
-      }}
-      onleave={() => {
-        layerHoveredIndex = null;
-        cursor = '';
-      }}
+      hovered={hover.dayIndex === i}
+      dimmed={hover.isDimmed(i)}
+      onhover={(idx) => hover.enterRoute(idx)}
+      onleave={() => hover.leaveRoute()}
       onselect={openRoute}
     />
 
@@ -110,8 +89,8 @@
         lnglat={{ lng: start[0], lat: start[1] }}
         index={i}
         color={dayColor(i)}
-        onhover={(idx) => (markerHoveredIndex = idx)}
-        onleave={() => (markerHoveredIndex = null)}
+        onhover={(idx) => hover.enterMarker(idx)}
+        onleave={() => hover.leaveMarker()}
         onselect={openRoute}
       />
     {/if}

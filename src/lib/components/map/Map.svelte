@@ -25,7 +25,7 @@
     layers: [{ id: 'google-hybrid', type: 'raster', source: 'google-hybrid' }]
   };
 
-  let { cursor = $bindable(''), bounds = null, children }: Props = $props();
+  let { cursor = '', bounds = null, children }: Props = $props();
 
   // Internal only — the effect below needs the instance, but no caller binds it.
   let map: maplibregl.Map | undefined = $state();
