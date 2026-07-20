@@ -11,22 +11,26 @@
   };
 </script>
 
-<div class="mx-30">
-  <div class="m-5 mx-auto text-center">
+<div class="px-30 py-5 h-screen flex flex-col gap-5">
+  <div class="mx-auto text-center">
     <h1 class="text-6xl uppercase w-fit mx-auto border-neutral-600 border-2 p-3">
       Morgan's Bikepacking
     </h1>
-    <p class="my-2">Explore routes, photos, and captions from different trips.</p>
-    <TripSelect
-      class="mx-auto"
-      value={data.selectedTripName}
-      trips={data.trips}
-      onValueChange={selectTrip}
-    />
+    <p class="my-2 uppercase font-bold text-md">
+      Explore routes, photos, and captions from different trips.
+    </p>
+    <button onclick={() => goto('/')} class="border-2 border-neutral-600 py-2 px-3">HOME</button>
   </div>
-  <div class="h-full border-2 border-neutral-600 bg-amber-200">
+  <div class="flex-1 min-h-0 border-2 border-neutral-600 bg-[#aa953a] p-0.5">
     {#if data.selectedTrip}
       <BikeMap images={data.images} trip={data.selectedTrip} />
+    {:else}
+      <TripSelect
+        class="mx-auto"
+        value={data.selectedTripName}
+        trips={data.trips}
+        onValueChange={selectTrip}
+      />
     {/if}
   </div>
 </div>
