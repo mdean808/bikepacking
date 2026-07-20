@@ -60,19 +60,26 @@
 
 <Map bind:cursor {bounds}>
   {#each images as image}
-    <ImageMarker
-      {image}
-      dimmed={hoveredDayIndex !== null}
-      onselect={openImageModal}
-      onhover={() => {
-        imageHovered = true;
-        cursor = 'pointer';
-      }}
-      onleave={() => {
-        imageHovered = false;
-        cursor = '';
-      }}
-    />
+    {@const loc = image.loc}
+    <!-- Ungeotagged photos get no marker. They previously rendered at the -1/-1
+         sentinel, dropping a pin in the Gulf of Guinea. They remain reachable in
+         the lightbox, where orderImagesAlongRoute sinks them to the end. -->
+    {#if loc}
+      <ImageMarker
+        {image}
+        {loc}
+        dimmed={hoveredDayIndex !== null}
+        onselect={openImageModal}
+        onhover={() => {
+          imageHovered = true;
+          cursor = 'pointer';
+        }}
+        onleave={() => {
+          imageHovered = false;
+          cursor = '';
+        }}
+      />
+    {/if}
   {/each}
 
   {#each trip.days as day, i}

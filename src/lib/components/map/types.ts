@@ -1,11 +1,9 @@
-import type * as maplibregl from 'maplibre-gl';
-
 export interface Image {
   description: string;
-  loc: maplibregl.LngLatLike;
+  /** Geotag from EXIF, or null when the asset has no usable coordinates. */
+  loc: { lng: number; lat: number } | null;
   type: 'image' | 'video';
   thumbnail: string;
-  original: string;
   preview: string;
   fullsize: string;
   /** Playback URL, only set for videos. */

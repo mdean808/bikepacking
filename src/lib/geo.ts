@@ -14,17 +14,10 @@ export const DAY_COLORS = [
   '#7209B7' // purple
 ];
 
-// Normalise maplibre's LngLatLike (object or [lng, lat] tuple) to a [lng, lat] pair.
-const toLngLat = (loc: Image['loc']): [number, number] | null => {
-  if (Array.isArray(loc)) return [loc[0], loc[1]];
-  if (loc && typeof loc === 'object' && 'lng' in loc && 'lat' in loc) {
-    return [(loc as { lng: number }).lng, (loc as { lat: number }).lat];
-  }
-  return null;
-};
-
-const isValidLngLat = (c: [number, number] | null): c is [number, number] =>
-  c !== null && c[0] !== -1 && c[1] !== -1 && Number.isFinite(c[0]) && Number.isFinite(c[1]);
+// A geotag is usable for route matching only if it exists and both components are
+// finite. Returns the [lng, lat] pair the distance scan wants, or null.
+const toCoord = (loc: Image['loc']): [number, number] | null =>
+  loc && Number.isFinite(loc.lng) && Number.isFinite(loc.lat) ? [loc.lng, loc.lat] : null;
 
 // Max vertices we sample from a day's track for photo matching. GPX days run to
 // tens of thousands of points; projecting every photo against every raw point on
@@ -72,8 +65,8 @@ export const orderImagesAlongRoute = (images: Image[], days: Day[]): Image[] => 
   type Ranked = { image: Image; dayIndex: number; along: number; order: number };
 
   const ranked: Ranked[] = images.map((image, order) => {
-    const coord = toLngLat(image.loc);
-    if (!isValidLngLat(coord)) {
+    const coord = toCoord(image.loc);
+    if (!coord) {
       return { image, dayIndex: days.length, along: 0, order };
     }
 

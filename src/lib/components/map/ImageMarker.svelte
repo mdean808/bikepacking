@@ -4,17 +4,20 @@
 
   interface Props {
     image: Image;
-    /** When a route is hovered, fade image markers back so the route reads on top. */
+    /** Where to place the marker. Passed separately because Image['loc'] is
+     * nullable and the caller has already established this one is not. */
+    loc: { lng: number; lat: number };
+    /** When a route is hovered, hide image markers so the route reads on top. */
     dimmed?: boolean;
     onselect?: (image: Image) => void;
     onhover?: () => void;
     onleave?: () => void;
   }
 
-  let { image, dimmed = false, onselect, onhover, onleave }: Props = $props();
+  let { image, loc, dimmed = false, onselect, onhover, onleave }: Props = $props();
 </script>
 
-<Marker lnglat={image.loc}>
+<Marker lnglat={loc}>
   {#snippet content()}
     <button
       onclick={(e) => {
