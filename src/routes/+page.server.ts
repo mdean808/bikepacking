@@ -4,8 +4,12 @@ import { TRIPS } from '$lib/trip';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {
-  const tripName = url.searchParams.get('trip') ?? TRIPS[0].name;
-  const trip = TRIPS.find((t) => t.name === tripName) ?? TRIPS[0];
+  const tripName = url.searchParams.get('trip');
+  const trip = tripName ? TRIPS.find((t) => t.name === tripName) : undefined;
+
+  if (!trip) {
+    return { albums: await getAlbums(), images: [] };
+  }
 
   const [assets, shareKey] = await Promise.all([
     getAllAlbumAssets(trip.album),

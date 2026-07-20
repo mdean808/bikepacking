@@ -11,10 +11,22 @@
   };
 </script>
 
-<div class="h-20">
-  <h1 class="text-2xl">Morgan's Bikepacking</h1>
-  <TripSelect value={data.selectedTripName} trips={data.trips} onValueChange={selectTrip} />
-</div>
-<div class="h-[calc(100dvh-5rem)]">
-  <BikeMap images={data.images} trip={data.selectedTrip} />
+<div class="mx-30">
+  <div class="m-5 mx-auto text-center">
+    <h1 class="text-6xl uppercase w-fit mx-auto border-neutral-600 border-2 p-3">
+      Morgan's Bikepacking
+    </h1>
+    <p class="my-2">Explore routes, photos, and captions from different trips.</p>
+    <TripSelect
+      class="mx-auto"
+      value={data.selectedTripName}
+      trips={data.trips}
+      onValueChange={selectTrip}
+    />
+  </div>
+  <div class="h-full border-2 border-neutral-600 bg-amber-200">
+    {#if data.selectedTrip}
+      <BikeMap images={data.images} trip={data.selectedTrip} />
+    {/if}
+  </div>
 </div>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { bbox } from '@turf/bbox';
   import type { Trip } from '$lib/trip';
-  import { DAY_COLORS, getRouteStart } from '$lib/geo';
+  import { DAY_COLORS, getRouteStart, orderImagesAlongRoute } from '$lib/geo';
   import Map from './Map.svelte';
   import DayRoute from './DayRoute.svelte';
   import DayMarker from './DayMarker.svelte';
@@ -36,10 +36,15 @@
 
   const color = (i: number) => DAY_COLORS[i % DAY_COLORS.length];
 
-  let modalImage: Image = $state({} as Image);
+  // One continuous sequence for the modal's prev/next: grouped by day, ordered
+  // spatially along each day's GPX track. See orderImagesAlongRoute.
+  const orderedImages = $derived(orderImagesAlongRoute(images, trip.days));
+
+  let modalIndex: number = $state(0);
   let modalOpen: boolean = $state(false);
   const openImageModal = (image: Image) => {
-    modalImage = image;
+    const i = orderedImages.indexOf(image);
+    modalIndex = i === -1 ? 0 : i;
     modalOpen = true;
   };
 
@@ -105,7 +110,7 @@
   {/each}
 </Map>
 
-<ImageModal bind:open={modalOpen} image={modalImage} />
+<ImageModal bind:open={modalOpen} images={orderedImages} bind:index={modalIndex} />
 <RouteModal
   bind:open={routeModalOpen}
   dayIndex={selectedDayIndex}

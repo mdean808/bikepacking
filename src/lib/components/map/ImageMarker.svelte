@@ -24,7 +24,7 @@
       onmouseenter={() => onhover?.()}
       onmouseleave={() => onleave?.()}
       title={image.description}
-      class="w-10 h-10 hover:w-15 hover:h-15 transition-all p-0.5 rounded-full bg-white shadow-md ring-1 ring-black/10"
+      class="relative w-10 h-10 hover:w-15 hover:h-15 transition-all p-0.5 rounded-full bg-white shadow-md ring-1 ring-black/10"
       class:opacity-0={dimmed}
       class:pointer-events-none={dimmed}
     >
@@ -33,6 +33,16 @@
         src={image.thumbnail}
         alt={image.description}
       />
+      {#if image.type === 'video'}
+        <span
+          class="absolute inset-0 flex items-center justify-center text-white drop-shadow"
+          aria-hidden="true"
+        >
+          <svg class="w-1/3 h-1/3" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </span>
+      {/if}
     </button>
   {/snippet}
 </Marker>

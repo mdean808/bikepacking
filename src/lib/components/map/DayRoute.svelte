@@ -33,10 +33,7 @@
     paint={{
       'line-color': color,
       'line-width': hovered ? 6 : 4,
-      // MapLibre drops lines with a non-zero line-offset once zoomed in far
-      // (the offset geometry falls outside the tile buffer), so ramp the
-      // fan-out offset back to 0 by high zoom to keep the route visible.
-      'line-offset': ['interpolate', ['linear'], ['zoom'], 13, offset, 16, 0],
+      'line-offset': offset,
       'line-opacity': dimmed ? 0.4 : 1
     }}
     onmouseenter={() => onhover?.(index)}
