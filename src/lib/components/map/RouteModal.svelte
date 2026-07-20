@@ -37,12 +37,12 @@
       <p class="mt-2 text-sm text-gray-600">{day.description}</p>
 
       <div class="mt-4 min-h-0 flex-1 overflow-hidden rounded-xl">
-      <Map {bounds}>
-        <DayRoute data={day.geoJSON} index={dayIndex} {color} offset={0} />
-        {#if start}
-          <DayMarker lnglat={{ lng: start[0], lat: start[1] }} index={dayIndex} {color} />
-        {/if}
-      </Map>
+        <Map {bounds}>
+          <DayRoute data={day.geoJSON} index={dayIndex} {color} offset={0} />
+          {#if start}
+            <DayMarker lnglat={{ lng: start[0], lat: start[1] }} index={dayIndex} {color} />
+          {/if}
+        </Map>
       </div>
     </div>
   </Modal>

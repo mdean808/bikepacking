@@ -27,6 +27,7 @@ Single-page SvelteKit app that renders bikepacking trips on a satellite map: GPX
 **Stack:** SvelteKit 2 + Svelte 5 (runes forced on via `vite.config.ts` — always use `$state`/`$derived`/`$props`), Tailwind 4, shadcn-svelte (`components.json`, generated UI under `src/lib/components/ui/`), maplibre-gl via `svelte-maplibre-gl`.
 
 **Data flow for the one route (`/`):**
+
 1. `+page.server.ts` runs server-side: fetches all Immich album assets and a share key, resolves the trip from `?trip=` query param (defaults to first trip).
 2. `+page.ts` has `ssr = false` (whole app is client-rendered) and merges the server data with `TRIPS`.
 3. `+page.svelte` → `BikeMap.svelte` is the orchestrator that composes the map layers.
