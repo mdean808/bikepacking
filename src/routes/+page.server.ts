@@ -1,4 +1,4 @@
-import { getAlbums, getAllAlbumAssets, getAlbumShareKey } from '$lib/immich';
+import { getAllAlbumAssets, getAlbumShareKey } from '$lib/immich';
 import { parseAssets } from '$lib/assets';
 import { TRIPS } from '$lib/trip';
 import type { PageServerLoad } from './$types';
@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ url }) => {
   const trip = tripName ? TRIPS.find((t) => t.name === tripName) : undefined;
 
   if (!trip) {
-    return { albums: await getAlbums(), images: [] };
+    return { images: [] };
   }
 
   const [assets, shareKey] = await Promise.all([
@@ -17,8 +17,5 @@ export const load: PageServerLoad = async ({ url }) => {
   ]);
   const images = await parseAssets(assets, shareKey);
 
-  return {
-    albums: await getAlbums(),
-    images
-  };
+  return { images };
 };

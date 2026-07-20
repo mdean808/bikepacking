@@ -1,7 +1,6 @@
 import { IMMICH_URL, IMMICH_API_KEY } from '$env/static/private';
 import {
   createSharedLink,
-  getAllAlbums,
   getAllSharedLinks,
   init,
   searchAssets,
@@ -10,8 +9,6 @@ import {
 } from '@immich/sdk';
 
 init({ baseUrl: IMMICH_URL, apiKey: IMMICH_API_KEY });
-
-export const getAlbums = () => getAllAlbums({});
 
 // Immich's /thumbnail and /original endpoints always require auth. A shared link
 // adds a `key` query param that bypasses auth for that album's assets, so the
@@ -31,7 +28,7 @@ export const getAlbumShareKey = async (albumId: string): Promise<string> => {
   return link.key;
 };
 
-export const paginateAlbumAssets = async (id: string, page: number = 1) => {
+const paginateAlbumAssets = async (id: string, page: number = 1) => {
   const n = 100;
   const res = await searchAssets({
     metadataSearchDto: {
