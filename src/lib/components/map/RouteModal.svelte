@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { bbox } from '@turf/bbox';
   import Modal from './Modal.svelte';
   import Map from './Map.svelte';
   import DayRoute from './DayRoute.svelte';
   import DayMarker from './DayMarker.svelte';
-  import { DAY_COLORS, getRouteStart } from '$lib/geo.js';
+  import { dayColor, getRouteStart, routeBounds } from '$lib/geo';
   import type { Day } from '$lib/trip';
 
   interface Props {
@@ -15,32 +14,41 @@
 
   let { open = $bindable(false), dayIndex, day }: Props = $props();
 
-  const color = $derived(dayIndex !== null ? DAY_COLORS[dayIndex % DAY_COLORS.length] : '#000');
-
-  const bounds = $derived(
-    day && day.geoJSON.features.length
-      ? (bbox(day.geoJSON) as [number, number, number, number])
+  // Both props are null until a route is picked, and every derived value below
+  // needs both. Resolving them together means one null check instead of one per
+  // value, and lets the template use them without re-guarding.
+  const view = $derived(
+    day !== null && dayIndex !== null
+      ? {
+          day,
+          dayIndex,
+          color: dayColor(dayIndex),
+          bounds: routeBounds(day.geoJSON),
+          start: getRouteStart(day.geoJSON)
+        }
       : null
   );
-
-  const start = $derived(day ? getRouteStart(day.geoJSON) : null);
 </script>
 
-{#if day && dayIndex !== null}
+{#if view}
   <Modal bind:open>
     <div class="flex h-full flex-col">
       <div class="flex items-center gap-3">
-        <div class="h-3 w-3 rounded-full" style="background-color: {color}"></div>
-        <h2 class="pr-8 text-lg font-semibold text-gray-900">{day.title}</h2>
+        <div class="h-3 w-3 rounded-full" style="background-color: {view.color}"></div>
+        <h2 class="pr-8 text-lg font-semibold text-gray-900">{view.day.title}</h2>
       </div>
 
-      <p class="mt-2 text-sm text-gray-600">{day.description}</p>
+      <p class="mt-2 text-sm text-gray-600">{view.day.description}</p>
 
       <div class="mt-4 min-h-0 flex-1 overflow-hidden rounded-xl">
-        <Map {bounds}>
-          <DayRoute data={day.geoJSON} index={dayIndex} {color} offset={0} />
-          {#if start}
-            <DayMarker lnglat={{ lng: start[0], lat: start[1] }} index={dayIndex} {color} />
+        <Map bounds={view.bounds}>
+          <DayRoute data={view.day.geoJSON} index={view.dayIndex} color={view.color} offset={0} />
+          {#if view.start}
+            <DayMarker
+              lnglat={{ lng: view.start[0], lat: view.start[1] }}
+              index={view.dayIndex}
+              color={view.color}
+            />
           {/if}
         </Map>
       </div>

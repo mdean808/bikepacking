@@ -9,13 +9,13 @@
     class?: string;
   }
 
-  let { value = $bindable(), trips, onValueChange, class: className }: Props = $props();
+  let { value, trips, onValueChange, class: className }: Props = $props();
 </script>
 
-<Select.Root type="single" bind:value {onValueChange}>
+<Select.Root type="single" {value} {onValueChange}>
   <Select.Trigger class={cn('w-45', className)}>{value || 'Select a Trip'}</Select.Trigger>
   <Select.Content>
-    {#each trips as trip}
+    {#each trips as trip (trip.name)}
       <Select.Item value={trip.name}>{trip.name}</Select.Item>
     {/each}
   </Select.Content>

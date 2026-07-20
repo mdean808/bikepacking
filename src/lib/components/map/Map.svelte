@@ -4,12 +4,9 @@
   import type { Snippet } from 'svelte';
 
   interface Props {
-    map?: maplibregl.Map;
     cursor?: string;
     /** [minX, minY, maxX, maxY] — the map fits to this whenever it changes. */
     bounds?: [number, number, number, number] | null;
-    style?: string | maplibregl.StyleSpecification;
-    class?: string;
     children?: Snippet;
   }
 
@@ -28,14 +25,10 @@
     layers: [{ id: 'google-hybrid', type: 'raster', source: 'google-hybrid' }]
   };
 
-  let {
-    map = $bindable(),
-    cursor = $bindable(''),
-    bounds = null,
-    style = satelliteWithRoads,
-    class: className = 'h-full',
-    children
-  }: Props = $props();
+  let { cursor = $bindable(''), bounds = null, children }: Props = $props();
+
+  // Internal only — the effect below needs the instance, but no caller binds it.
+  let map: maplibregl.Map | undefined = $state();
 
   $effect(() => {
     if (!map || !bounds) return;
@@ -53,6 +46,6 @@
   });
 </script>
 
-<MapLibre bind:map {cursor} class={className} {style}>
+<MapLibre bind:map {cursor} class="h-full" style={satelliteWithRoads}>
   {@render children?.()}
 </MapLibre>

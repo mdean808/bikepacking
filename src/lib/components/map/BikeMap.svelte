@@ -1,7 +1,12 @@
 <script lang="ts">
-  import { bbox } from '@turf/bbox';
   import type { Trip } from '$lib/trip';
-  import { DAY_COLORS, getRouteStart, orderImagesAlongRoute } from '$lib/geo';
+  import {
+    dayColor,
+    dayLineOffset,
+    getRouteStart,
+    orderImagesAlongRoute,
+    routeBounds
+  } from '$lib/geo';
   import Map from './Map.svelte';
   import DayRoute from './DayRoute.svelte';
   import DayMarker from './DayMarker.svelte';
@@ -30,11 +35,7 @@
     features: trip.days.flatMap((day) => day.geoJSON.features)
   });
 
-  const bounds = $derived(
-    fullGeoJson.features.length ? (bbox(fullGeoJson) as [number, number, number, number]) : null
-  );
-
-  const color = (i: number) => DAY_COLORS[i % DAY_COLORS.length];
+  const bounds = $derived(routeBounds(fullGeoJson));
 
   // One continuous sequence for the modal's prev/next: grouped by day, ordered
   // spatially along each day's GPX track. See orderImagesAlongRoute.
@@ -59,7 +60,7 @@
 </script>
 
 <Map bind:cursor {bounds}>
-  {#each images as image}
+  {#each images as image (image.thumbnail)}
     {@const loc = image.loc}
     <!-- Ungeotagged photos get no marker. They previously rendered at the -1/-1
          sentinel, dropping a pin in the Gulf of Guinea. They remain reachable in
@@ -82,13 +83,13 @@
     {/if}
   {/each}
 
-  {#each trip.days as day, i}
+  {#each trip.days as day, i (`${trip.name}-${i}`)}
     {@const dayGeoJson = day.geoJSON}
-    {@const offset = (i - (trip.days.length - 1) / 2) * 2}
+    {@const offset = dayLineOffset(i, trip.days.length)}
     <DayRoute
       data={dayGeoJson}
       index={i}
-      color={color(i)}
+      color={dayColor(i)}
       {offset}
       hovered={hoveredDayIndex === i}
       dimmed={hoveredDayIndex !== null && hoveredDayIndex !== i}
@@ -108,7 +109,7 @@
       <DayMarker
         lnglat={{ lng: start[0], lat: start[1] }}
         index={i}
-        color={color(i)}
+        color={dayColor(i)}
         onhover={(idx) => (markerHoveredIndex = idx)}
         onleave={() => (markerHoveredIndex = null)}
         onselect={openRoute}

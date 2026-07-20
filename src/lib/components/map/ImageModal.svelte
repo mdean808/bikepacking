@@ -15,7 +15,7 @@
 
   let { open = $bindable(false), images, index = $bindable(0) }: Props = $props();
 
-  const image = $derived(images[index] ?? ({} as Image));
+  const image = $derived(images[index]);
   const hasPrev = $derived(index > 0);
   const hasNext = $derived(index < images.length - 1);
   const prev = () => {
@@ -25,8 +25,8 @@
     if (hasNext) index += 1;
   };
 
-  // Arrow keys page through the sequence while the modal is open. Escape/close is
-  // handled by Modal; panzoom only listens for wheel/drag, so there's no conflict.
+  // Arrow keys page through the sequence while the modal is open. panzoom only
+  // listens for wheel/drag, so there's no conflict.
   const onKeydown = (e: KeyboardEvent) => {
     if (!open) return;
     if (e.key === 'ArrowLeft') {
@@ -38,16 +38,9 @@
     }
   };
 
-  const isVideo = $derived(image.type === 'video');
+  const isVideo = $derived(image?.type === 'video');
 
-  // Reset the loading state whenever a different image is opened so the spinner
-  // shows again instead of flashing the previous photo.
   let loaded = $state(false);
-  $effect(() => {
-    image.fullsize;
-    loaded = false;
-  });
-
   let imgEl: HTMLImageElement | undefined = $state();
   let pz: PanZoom | undefined;
 
@@ -69,9 +62,13 @@
     };
   });
 
-  // Reset pan/zoom to the identity transform whenever a new image is shown.
+  // One reset per newly-shown asset: re-arm the spinner so it shows again rather
+  // than flashing the previous photo, and drop pan/zoom back to identity.
+  // Depends on `image` itself, so it also fires when the underlying list changes
+  // (switching trips) without the index having moved.
   $effect(() => {
-    image.fullsize;
+    image;
+    loaded = false;
     pz?.moveTo(0, 0);
     pz?.zoomAbs(0, 0, 1);
   });
@@ -79,72 +76,83 @@
 
 <svelte:window onkeydown={onKeydown} />
 
+{#snippet navButton(dir: 'prev' | 'next')}
+  {@const isPrev = dir === 'prev'}
+  <!-- panzoom binds its listeners to the image's container, which these buttons
+       overlay, so their events would otherwise reach it: a double-click would
+       zoom the photo and a press-drag would pan it. Stop them at the button. -->
+  <button
+    onclick={(e) => {
+      e.stopPropagation();
+      (isPrev ? prev : next)();
+    }}
+    ondblclick={(e) => e.stopPropagation()}
+    onmousedown={(e) => e.stopPropagation()}
+    aria-label={isPrev ? 'Previous photo' : 'Next photo'}
+    class="absolute top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 {isPrev
+      ? 'left-3'
+      : 'right-3'}"
+  >
+    {#if isPrev}
+      <ChevronLeft size={24} />
+    {:else}
+      <ChevronRight size={24} />
+    {/if}
+  </button>
+{/snippet}
+
 <Modal bind:open>
-  <div class="flex h-full flex-col gap-4">
-    <div
-      class="relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-neutral-100"
-      class:cursor-grab={!isVideo}
-      class:active:cursor-grabbing={!isVideo}
-    >
-      {#if !loaded}
-        <div class="absolute inset-0 flex items-center justify-center">
-          <div
-            class="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600"
-          ></div>
-        </div>
-      {/if}
-      {#if isVideo}
-        <!-- svelte-ignore a11y_media_has_caption -->
-        <video
-          src={image.video}
-          poster={image.preview}
-          controls
-          autoplay
-          playsinline
-          onloadeddata={() => (loaded = true)}
-          class="h-full w-full object-contain transition-opacity duration-300"
-          class:opacity-0={!loaded}
-        ></video>
-      {:else}
-        <img
-          bind:this={imgEl}
-          src={image.fullsize}
-          alt={image.description || 'Trip photo'}
-          onload={() => (loaded = true)}
-          class="h-full w-full object-contain transition-opacity duration-300"
-          class:opacity-0={!loaded}
-        />
-      {/if}
+  {#if image}
+    <div class="flex h-full flex-col gap-4">
+      <div
+        class="relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-neutral-100"
+        class:cursor-grab={!isVideo}
+        class:active:cursor-grabbing={!isVideo}
+      >
+        {#if !loaded}
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div
+              class="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600"
+            ></div>
+          </div>
+        {/if}
+        {#if isVideo}
+          <!-- svelte-ignore a11y_media_has_caption -->
+          <video
+            src={image.video}
+            poster={image.preview}
+            controls
+            autoplay
+            playsinline
+            onloadeddata={() => (loaded = true)}
+            class="h-full w-full object-contain transition-opacity duration-300"
+            class:opacity-0={!loaded}
+          ></video>
+        {:else}
+          <img
+            bind:this={imgEl}
+            src={image.fullsize}
+            alt={image.description || 'Trip photo'}
+            onload={() => (loaded = true)}
+            class="h-full w-full object-contain transition-opacity duration-300"
+            class:opacity-0={!loaded}
+          />
+        {/if}
 
-      {#if hasPrev}
-        <button
-          onclick={prev}
-          aria-label="Previous photo"
-          class="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60"
-        >
-          <ChevronLeft size={24} />
-        </button>
-      {/if}
-      {#if hasNext}
-        <button
-          onclick={next}
-          aria-label="Next photo"
-          class="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60"
-        >
-          <ChevronRight size={24} />
-        </button>
-      {/if}
-    </div>
+        {#if hasPrev}{@render navButton('prev')}{/if}
+        {#if hasNext}{@render navButton('next')}{/if}
+      </div>
 
-    <div class="flex items-start justify-between gap-4">
-      {#if image.description}
-        <p class="text-sm leading-relaxed text-gray-700">{image.description}</p>
-      {/if}
-      {#if images.length > 1}
-        <span class="shrink-0 text-sm tabular-nums text-gray-400">
-          {index + 1} / {images.length}
-        </span>
-      {/if}
+      <div class="flex items-start justify-between gap-4">
+        {#if image.description}
+          <p class="text-sm leading-relaxed text-gray-700">{image.description}</p>
+        {/if}
+        {#if images.length > 1}
+          <span class="shrink-0 text-sm tabular-nums text-gray-400">
+            {index + 1} / {images.length}
+          </span>
+        {/if}
+      </div>
     </div>
-  </div>
+  {/if}
 </Modal>

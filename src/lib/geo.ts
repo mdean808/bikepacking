@@ -1,3 +1,4 @@
+import { bbox } from '@turf/bbox';
 import type { FeatureCollection, Position } from 'geojson';
 import type { Day } from '$lib/trip';
 import type { Image } from '$lib/components/map/types';
@@ -13,6 +14,21 @@ export const DAY_COLORS = [
   '#F9C74F', // gold
   '#7209B7' // purple
 ];
+
+// Days cycle back through the palette once a trip runs longer than DAY_COLORS.
+export const dayColor = (i: number): string => DAY_COLORS[i % DAY_COLORS.length];
+
+// [minX, minY, maxX, maxY] for a collection, or null when there is nothing to
+// fit — @turf/bbox returns Infinities on an empty FeatureCollection, which
+// maplibre's fitBounds cannot consume.
+export const routeBounds = (fc: FeatureCollection): [number, number, number, number] | null =>
+  fc.features.length ? (bbox(fc) as [number, number, number, number]) : null;
+
+// Days often share long stretches of road, where identical lines would draw on
+// top of each other and only the last day would be visible. Fan them out around
+// the centre of the stack — with 4 days the offsets run -3, -1, 1, 3 — so every
+// day stays individually clickable. Units are DayRoute's line-offset pixels.
+export const dayLineOffset = (i: number, total: number): number => (i - (total - 1) / 2) * 2;
 
 // A geotag is usable for route matching only if it exists and both components are
 // finite. Returns the [lng, lat] pair the distance scan wants, or null.
