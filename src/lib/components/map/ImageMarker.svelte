@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Marker } from 'svelte-maplibre-gl';
-  import type { Image } from './types.js';
+  import type { Image } from './types';
 
   interface Props {
     image: Image;

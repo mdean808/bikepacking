@@ -1,6 +1,6 @@
 <script lang="ts">
   import BikeMap from '$lib/components/map/BikeMap.svelte';
-  import TripSelect from '$lib/components/map/TripSelect.svelte';
+  import TripSelect from '$lib/components/TripSelect.svelte';
   import { goto } from '$app/navigation';
   import type { PageProps } from './$types';
 

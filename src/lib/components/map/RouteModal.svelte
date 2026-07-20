@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Modal from './Modal.svelte';
+  import Modal from '$lib/components/Modal.svelte';
   import Map from './Map.svelte';
   import DayRoute from './DayRoute.svelte';
   import DayMarker from './DayMarker.svelte';
@@ -31,7 +31,7 @@
 </script>
 
 {#if view}
-  <Modal bind:open>
+  <Modal bind:open title={view.day.title}>
     <div class="flex h-full flex-col">
       <div class="flex items-center gap-3">
         <div class="h-3 w-3 rounded-full" style="background-color: {view.color}"></div>

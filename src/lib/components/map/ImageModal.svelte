@@ -2,8 +2,8 @@
   import panzoom from 'panzoom';
   import type { PanZoom } from 'panzoom';
   import { ChevronLeft, ChevronRight } from '@lucide/svelte';
-  import Modal from './Modal.svelte';
-  import type { Image } from './types.js';
+  import Modal from '$lib/components/Modal.svelte';
+  import type { Image } from './types';
 
   interface Props {
     open?: boolean;
@@ -101,7 +101,7 @@
   </button>
 {/snippet}
 
-<Modal bind:open>
+<Modal bind:open title="Photo {index + 1} of {images.length}">
   {#if image}
     <div class="flex h-full flex-col gap-4">
       <div

@@ -14,7 +14,7 @@
   import ImageModal from './ImageModal.svelte';
   import RouteModal from './RouteModal.svelte';
   import { createHoverState } from './hover.svelte.js';
-  import type { Image } from './types.js';
+  import type { Image } from './types';
 
   const { images, trip }: { images: Image[]; trip: Trip } = $props();
 
