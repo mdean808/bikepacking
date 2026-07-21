@@ -18,8 +18,13 @@ export const parseAssets = async (
     // Both coordinates must be present to place a marker. Checked with != null
     // rather than a falsy test so a real 0 (equator / prime meridian) survives.
     const { latitude, longitude } = a.exifInfo ?? {};
+    // Prefer the camera's own capture time; fall back to Immich's file timestamp
+    // for assets whose EXIF was stripped. Both are absolute instants, so ordering
+    // by them stays correct across a trip that crosses timezones.
+    const taken = Date.parse(a.exifInfo?.dateTimeOriginal ?? a.fileCreatedAt ?? '');
     const image: Image = {
       loc: latitude != null && longitude != null ? { lat: latitude, lng: longitude } : null,
+      takenAt: Number.isNaN(taken) ? null : taken,
       description: a.exifInfo?.description || '',
       type: isVideo ? 'video' : 'image',
       thumbnail: thumb(a.id, 'thumbnail'),

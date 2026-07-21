@@ -1,12 +1,6 @@
 <script lang="ts">
   import type { Trip } from '$lib/trips';
-  import {
-    dayColor,
-    dayLineOffset,
-    getRouteStart,
-    orderImagesAlongRoute,
-    routeBounds
-  } from '$lib/geo';
+  import { dayColor, dayLineOffset, getRouteStart, orderImagesByTime, routeBounds } from '$lib/geo';
   import Map from './Map.svelte';
   import DayRoute from './DayRoute.svelte';
   import DayMarker from './DayMarker.svelte';
@@ -28,9 +22,9 @@
 
   const bounds = $derived(routeBounds(fullGeoJson));
 
-  // One continuous sequence for the modal's prev/next: grouped by day, ordered
-  // spatially along each day's GPX track. See orderImagesAlongRoute.
-  const orderedImages = $derived(orderImagesAlongRoute(images, trip.days));
+  // One continuous sequence for the modal's prev/next, in capture-time order, so
+  // paging left/right walks the trip as it happened. See orderImagesByTime.
+  const orderedImages = $derived(orderImagesByTime(images));
 
   let modalIndex: number = $state(0);
   let modalOpen: boolean = $state(false);
@@ -55,7 +49,7 @@
     {@const loc = image.loc}
     <!-- Ungeotagged photos get no marker. They previously rendered at the -1/-1
          sentinel, dropping a pin in the Gulf of Guinea. They remain reachable in
-         the lightbox, where orderImagesAlongRoute sinks them to the end. -->
+         the lightbox, where they sit in capture-time order like everything else. -->
     {#if loc}
       <ImageMarker
         {image}

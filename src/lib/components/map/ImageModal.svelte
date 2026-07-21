@@ -78,9 +78,9 @@
 
 {#snippet navButton(dir: 'prev' | 'next')}
   {@const isPrev = dir === 'prev'}
-  <!-- panzoom binds its listeners to the image's container, which these buttons
-       overlay, so their events would otherwise reach it: a double-click would
-       zoom the photo and a press-drag would pan it. Stop them at the button. -->
+  <!-- These live outside the panzoom viewport (see markup below) so their events
+       never reach panzoom's listeners by bubbling. stopPropagation is kept as a
+       second line of defence for the modal chrome above them. -->
   <button
     onclick={(e) => {
       e.stopPropagation();
@@ -116,28 +116,36 @@
             ></div>
           </div>
         {/if}
-        {#if isVideo}
-          <!-- svelte-ignore a11y_media_has_caption -->
-          <video
-            src={image.video}
-            poster={image.preview}
-            controls
-            autoplay
-            playsinline
-            onloadeddata={() => (loaded = true)}
-            class="h-full w-full object-contain transition-opacity duration-300"
-            class:opacity-0={!loaded}
-          ></video>
-        {:else}
-          <img
-            bind:this={imgEl}
-            src={image.fullsize}
-            alt={image.description || 'Trip photo'}
-            onload={() => (loaded = true)}
-            class="h-full w-full object-contain transition-opacity duration-300"
-            class:opacity-0={!loaded}
-          />
-        {/if}
+        <!-- panzoom takes the image's *parent* as its owner and binds dblclick,
+             mousedown and wheel there. Giving the media its own wrapper keeps that
+             owner free of the nav buttons: a double-click on a chevron can never
+             reach it, even on the click that unmounts the button at either end of
+             the sequence (where a dblclick would otherwise retarget to whatever
+             ancestor the two clicks share). -->
+        <div class="absolute inset-0 overflow-hidden">
+          {#if isVideo}
+            <!-- svelte-ignore a11y_media_has_caption -->
+            <video
+              src={image.video}
+              poster={image.preview}
+              controls
+              autoplay
+              playsinline
+              onloadeddata={() => (loaded = true)}
+              class="h-full w-full object-contain transition-opacity duration-300"
+              class:opacity-0={!loaded}
+            ></video>
+          {:else}
+            <img
+              bind:this={imgEl}
+              src={image.fullsize}
+              alt={image.description || 'Trip photo'}
+              onload={() => (loaded = true)}
+              class="h-full w-full object-contain transition-opacity duration-300"
+              class:opacity-0={!loaded}
+            />
+          {/if}
+        </div>
 
         {#if hasPrev}{@render navButton('prev')}{/if}
         {#if hasNext}{@render navButton('next')}{/if}
