@@ -7,14 +7,27 @@
     /** Where to place the marker. Passed separately because Image['loc'] is
      * nullable and the caller has already established this one is not. */
     loc: { lng: number; lat: number };
-    /** When a route is hovered, hide image markers so the route reads on top. */
+    /** When another day is spotlighted, this photo fades back so the active day reads. */
     dimmed?: boolean;
+    /** Cross-highlight: its twin (a profile dot, or itself) is hovered — enlarge + ring. */
+    highlighted?: boolean;
+    /** Day colour, for the highlight ring. */
+    color?: string;
     onselect?: (image: Image) => void;
     onhover?: () => void;
     onleave?: () => void;
   }
 
-  let { image, loc, dimmed = false, onselect, onhover, onleave }: Props = $props();
+  let {
+    image,
+    loc,
+    dimmed = false,
+    highlighted = false,
+    color = '#ffffff',
+    onselect,
+    onhover,
+    onleave
+  }: Props = $props();
 </script>
 
 <Marker lnglat={loc}>
@@ -27,9 +40,13 @@
       onmouseenter={() => onhover?.()}
       onmouseleave={() => onleave?.()}
       title={image.description}
-      class="relative w-10 h-10 hover:w-15 hover:h-15 transition-all p-0.5 rounded-full bg-white shadow-md ring-1 ring-black/10"
-      class:opacity-0={dimmed}
-      class:pointer-events-none={dimmed}
+      class="relative rounded-full bg-white p-0.5 shadow-md ring-1 ring-black/10 transition-all hover:h-15 hover:w-15"
+      class:h-10={!highlighted}
+      class:w-10={!highlighted}
+      class:h-15={highlighted}
+      class:w-15={highlighted}
+      class:opacity-40={dimmed}
+      style={highlighted ? `box-shadow: 0 0 0 3px ${color}, 0 2px 8px rgba(0,0,0,0.45)` : ''}
     >
       <img
         class="aspect-square object-cover object-center rounded-full w-full h-full"

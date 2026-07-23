@@ -8,6 +8,9 @@
 
 @theme {
   --color-hazy-ipa: #aa953a;
+  /* League Spartan (--font-sans) is the display face; Inter carries longer body
+     copy like the trip-journal day descriptions, where it stays readable. */
+  --font-body: 'Inter Variable', sans-serif;
   --text-shadow-block:
     -0.5px 0.5px 0px theme('colors.neutral-700'), -1px 1px 0px theme('colors.neutral-700'),
     -1.5px 1.5px 0px theme('colors.neutral-700');

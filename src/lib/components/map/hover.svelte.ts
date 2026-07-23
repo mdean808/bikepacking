@@ -19,9 +19,15 @@ class HoverState {
   // Whether any photo marker is hovered. Only one can be at a time, and nothing
   // needs to know which, so a boolean is enough.
   #image = $state(false);
+  // Which day the elevation profile reports as hovered, if any. Its own slot
+  // (not #route) so profile and map hover never clobber each other as the cursor
+  // crosses between them — see routeHover.svelte.ts.
+  #profile: number | null = $state(null);
 
   /** The day that should read as highlighted, or null when none does. */
-  readonly dayIndex: number | null = $derived(this.#image ? null : (this.#marker ?? this.#route));
+  readonly dayIndex: number | null = $derived(
+    this.#image ? null : (this.#marker ?? this.#route ?? this.#profile)
+  );
 
   /**
    * Cursor for the map canvas. Derived rather than assigned — this is the value
@@ -34,14 +40,6 @@ class HoverState {
 
   /** True while any day is highlighted — photo markers hide so the route reads. */
   readonly anyDayHovered: boolean = $derived(this.dayIndex !== null);
-
-  /**
-   * Photo markers are DOM overlays that can cover a route line, so a click
-   * landing while one is hovered belongs to the photo, not the route beneath it.
-   */
-  get canOpenRoute(): boolean {
-    return !this.#image;
-  }
 
   /** A day is dimmed when some *other* day is the highlighted one. */
   isDimmed(i: number): boolean {
@@ -65,6 +63,12 @@ class HoverState {
   }
   leaveImage() {
     this.#image = false;
+  }
+  enterProfile(i: number) {
+    this.#profile = i;
+  }
+  leaveProfile() {
+    this.#profile = null;
   }
 }
 

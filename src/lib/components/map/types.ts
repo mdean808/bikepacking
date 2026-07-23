@@ -11,3 +11,13 @@ export interface Image {
   /** Playback URL, only set for videos. */
   video?: string;
 }
+
+/** A photo pinned to its place along the route — see anchorOnRoute in elevation.ts. */
+export interface PhotoAnchor {
+  image: Image;
+  dayIndex: number;
+  distanceKm: number;
+  elevationM: number;
+  /** Distance from the photo's geotag to the route line, in km. */
+  offRouteKm: number;
+}

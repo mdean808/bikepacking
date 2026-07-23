@@ -7,24 +7,13 @@
     index: number;
     color: string;
     offset: number;
+    // hovered/dimmed are driven externally (day markers, elevation profile) — the
+    // route line itself is inert to the mouse, so it has no event handlers.
     hovered?: boolean;
     dimmed?: boolean;
-    onhover?: (index: number) => void;
-    onleave?: () => void;
-    onselect?: (index: number) => void;
   }
 
-  let {
-    data,
-    index,
-    color,
-    offset,
-    hovered = false,
-    dimmed = false,
-    onhover,
-    onleave,
-    onselect
-  }: Props = $props();
+  let { data, index, color, offset, hovered = false, dimmed = false }: Props = $props();
 </script>
 
 <GeoJSONSource id="route-day-{index}" {data}>
@@ -36,8 +25,5 @@
       'line-offset': offset,
       'line-opacity': dimmed ? 0.4 : 1
     }}
-    onmouseenter={() => onhover?.(index)}
-    onmouseleave={() => onleave?.()}
-    onclick={() => onselect?.(index)}
   />
 </GeoJSONSource>

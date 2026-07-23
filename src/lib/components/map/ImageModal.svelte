@@ -151,12 +151,14 @@
         {#if hasNext}{@render navButton('next')}{/if}
       </div>
 
-      <div class="flex items-start justify-between gap-4">
+      <!-- Caption (the asset's Immich description) stacks above the counter, so a
+           photo with no description just shows the count. -->
+      <div class="flex flex-col gap-1">
         {#if image.description}
           <p class="text-sm leading-relaxed text-gray-700">{image.description}</p>
         {/if}
         {#if images.length > 1}
-          <span class="shrink-0 text-sm tabular-nums text-gray-400">
+          <span class="shrink-0 self-end text-sm tabular-nums text-gray-400">
             {index + 1} / {images.length}
           </span>
         {/if}

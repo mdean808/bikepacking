@@ -7,6 +7,8 @@
     cursor?: string;
     /** [minX, minY, maxX, maxY] — the map fits to this whenever it changes. */
     bounds?: [number, number, number, number] | null;
+    /** Bindable so a parent can drive the map imperatively (e.g. recenter). */
+    map?: maplibregl.Map;
     children?: Snippet;
   }
 
@@ -25,10 +27,7 @@
     layers: [{ id: 'google-hybrid', type: 'raster', source: 'google-hybrid' }]
   };
 
-  let { cursor = '', bounds = null, children }: Props = $props();
-
-  // Internal only — assigned by `bind:map` on <MapLibre> once the map is created.
-  let map: maplibregl.Map | undefined = $state();
+  let { cursor = '', bounds = null, map = $bindable(), children }: Props = $props();
 
   $effect(() => {
     if (!map || !bounds) return;
