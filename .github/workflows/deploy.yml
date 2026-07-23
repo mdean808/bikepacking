@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  # Rebuild on every push to main.
+  push:
+    branches: [main]
+  # Manual rebuild — use this to pull in newly added Immich photos without a
+  # code change, since prerendered photo data is frozen at build time.
+  workflow_dispatch:
+
+# Let the deploy job publish to Pages via OIDC.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; don't cancel an in-flight one mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        # The static build runs every load() once here — this is the only place
+        # IMMICH_API_KEY is used. src/lib/immich.ts reads these from
+        # $env/static/private, so they must be present as repo secrets.
+        env:
+          IMMICH_URL: ${{ secrets.IMMICH_URL }}
+          IMMICH_API_KEY: ${{ secrets.IMMICH_API_KEY }}
+        run: pnpm build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

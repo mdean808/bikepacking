@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
@@ -13,9 +13,13 @@ export default defineConfig({
           filename.split(/[/\\]/).includes('node_modules') ? undefined : true
       },
 
-      // adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
-      // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-      // See https://svelte.dev/docs/kit/adapters for more information about adapters.
+      // Static build for GitHub Pages. Every route is prerendered (see
+      // src/routes/+layout.ts), so there is no server at runtime. Defaults are
+      // right: output to build/, no `fallback` (with everything prerendered a
+      // fallback would only hide a failed-to-prerender route behind a silent
+      // client fetch), strict on so a missed route is a loud build error.
+      // No `paths.base`: the site is served from a custom domain (see
+      // static/CNAME), where base is '' — a project-pages URL would need one.
       adapter: adapter()
     })
   ],

@@ -16,6 +16,13 @@ export type Day = DayMeta & {
 
 export type TripMeta = {
   name: string;
+  /**
+   * URL segment for this trip (the `[[trip]]` route param), e.g. 'haida-gwaii'.
+   * Explicit rather than derived from `name` so renaming a trip can't silently
+   * break shared links, and so names that need encoding ("Haida Gwaii") don't
+   * leak into the URL. Also the prerender entry key — see +page.server.ts.
+   */
+  slug: string;
   description: string;
   date: Date;
   album: string;
@@ -30,6 +37,7 @@ export type Trip = Omit<TripMeta, 'days'> & { days: Day[] };
 export const TRIPS: TripMeta[] = [
   {
     name: 'Haida Gwaii',
+    slug: 'haida-gwaii',
     description: 'Bikepacking trip to haida gwaii',
     date: new Date('2025-07-01'),
     album: '208dc9a4-e56a-4d97-b927-e661a0e1390e',

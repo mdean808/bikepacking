@@ -3,6 +3,7 @@
   import TripSelect from '$lib/components/TripSelect.svelte';
   import BikeWheel from '$lib/components/BikeWheel.svelte';
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { fade, fly } from 'svelte/transition';
   import type { PageProps } from './$types';
 
@@ -19,16 +20,20 @@
 
   const selectTrip = async (name: string) => {
     if (launching) return;
+    // The wheel/select speak names; the route is keyed by slug. `base` is '' on
+    // the custom domain, but keep it so a project-pages deploy wouldn't break.
+    const slug = data.trips.find((t) => t.name === name)?.slug;
+    if (!slug) return;
     launching = true;
     await Promise.all([
-      goto(`?trip=${encodeURIComponent(name)}`, { keepFocus: true, noScroll: true }),
+      goto(`${base}/${slug}`, { keepFocus: true, noScroll: true }),
       wheel?.launch()
     ]);
     launching = false;
   };
 
-  // TripSelect only needs names; the server no longer ships every trip's GeoJSON.
-  const tripOptions = $derived(data.tripNames.map((name) => ({ name })));
+  // The selectors only need names; the server no longer ships every trip's GeoJSON.
+  const tripOptions = $derived(data.trips.map(({ name }) => ({ name })));
 </script>
 
 <svelte:head>
@@ -48,7 +53,7 @@
       Explore routes, photos, and captions from different trips.
     </p>
     <button
-      onclick={() => goto('/')}
+      onclick={() => goto(`${base}/`)}
       class="border-2 border-neutral-600 py-2 px-3 hover:border-hazy-ipa hover:text-hazy-ipa transition-all hover:text-shadow-block hover:shadow-block"
       >HOME</button
     >
