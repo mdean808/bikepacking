@@ -1,6 +1,6 @@
 <script lang="ts">
   import { MapLibre } from 'svelte-maplibre-gl';
-  import type * as maplibregl from 'maplibre-gl';
+  import * as maplibregl from 'maplibre-gl';
   import type { Snippet } from 'svelte';
 
   interface Props {
@@ -27,7 +27,7 @@
 
   let { cursor = '', bounds = null, children }: Props = $props();
 
-  // Internal only — the effect below needs the instance, but no caller binds it.
+  // Internal only — assigned by `bind:map` on <MapLibre> once the map is created.
   let map: maplibregl.Map | undefined = $state();
 
   $effect(() => {
@@ -46,6 +46,13 @@
   });
 </script>
 
-<MapLibre bind:map {cursor} class="h-full" style={satelliteWithRoads}>
+<MapLibre
+  bind:map
+  {cursor}
+  zoom={4}
+  center={{ lng: -120, lat: 40 }}
+  class="h-full"
+  style={satelliteWithRoads}
+>
   {@render children?.()}
 </MapLibre>

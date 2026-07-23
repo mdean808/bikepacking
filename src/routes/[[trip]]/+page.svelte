@@ -62,7 +62,7 @@
        time for the length of the crossfade; in normal flow the arriving one would
        be laid out below its neighbour for that stretch and the panel would jump.
        `overflow-hidden` keeps the sliding map inside the border. -->
-  <div class="flex-1 min-h-0 border-2 border-neutral-600 relative overflow-hidden">
+  <div class="flex-1 min-h-0 border-2 border-neutral-600 relative bg-blue-100 overflow-hidden">
     {#if data.trip && !launching}
       <div
         class="absolute inset-0"

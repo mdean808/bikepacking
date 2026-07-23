@@ -8,7 +8,7 @@ on:
   # code change, since prerendered photo data is frozen at build time.
   workflow_dispatch:
 
-# Let the deploy job publish to Pages via OIDC.
+# Let the deploy step publish to Pages via OIDC.
 permissions:
   contents: read
   pages: write
@@ -16,27 +16,34 @@ permissions:
 
 # One deploy at a time; don't cancel an in-flight one mid-publish.
 concurrency:
-  group: pages
+  group: 'pages'
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
         with:
           version: 11
 
-      - uses: actions/setup-node@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Build
+      - name: Build Site
         # The static build runs every load() once here — this is the only place
         # IMMICH_API_KEY is used. src/lib/immich.ts reads these from
         # $env/static/private, so they must be present as repo secrets.
@@ -45,16 +52,11 @@ jobs:
           IMMICH_API_KEY: ${{ secrets.IMMICH_API_KEY }}
         run: pnpm build
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@v5
         with:
-          path: build
+          path: 'build/'
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
