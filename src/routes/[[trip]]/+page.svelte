@@ -1,13 +1,28 @@
 <script lang="ts">
   import BikeMap from '$lib/components/map/BikeMap.svelte';
   import BikeWheel from '$lib/components/BikeWheel.svelte';
+  import WheelPeloton from '$lib/components/WheelPeloton.svelte';
   import TripJournal from '$lib/components/TripJournal.svelte';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
+  import { browser } from '$app/environment';
   import { fade, fly } from 'svelte/transition';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
+
+  // "Medium and below" gets the rolling peloton; lg+ keeps the single spoked
+  // wheel. Seeded synchronously (ssr = false, so window exists at setup) so a
+  // phone never flashes the desktop wheel before the effect below can correct it.
+  const COMPACT_QUERY = '(max-width: 1023px)';
+  let compact = $state(browser && window.matchMedia(COMPACT_QUERY).matches);
+  $effect(() => {
+    const mq = window.matchMedia(COMPACT_QUERY);
+    compact = mq.matches;
+    const onChange = (e: MediaQueryListEvent) => (compact = e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  });
 
   // Both selectors route through here so the dropdown gets the same send-off as
   // the wheel. `launching` holds the wheel mounted past the navigation: without
@@ -15,7 +30,9 @@
   // and cut the ramp off partway. Waiting on both means the wheel is on screen
   // for whichever takes longer — the animation or the Immich fetch — so a warm
   // load doesn't flash past and a slow one doesn't sit on a finished animation.
-  let wheel = $state<ReturnType<typeof BikeWheel>>();
+  // Either selector — the spoked wheel or the peloton — exposes launch(), so the
+  // binding is typed to that shared shape rather than one component's instance.
+  let wheel = $state<{ launch: () => Promise<void> }>();
   let launching = $state(false);
 
   const selectTrip = async (name: string) => {
@@ -47,22 +64,26 @@
 <div class="flex min-h-screen flex-col">
   <!-- Just under a full viewport so the "Day by Day" heading below the map peeks
        above the fold, inviting a scroll. Tune the vh value to reveal more/less. -->
-  <div class="px-30 py-5 h-[88vh] flex flex-col gap-5">
+  <div class="px-0 py-5 lg:px-30 h-[88vh] flex flex-col gap-5">
     <div class="mx-auto text-center">
       <h1 class="text-6xl uppercase w-fit mx-auto">
         {data.trip ? data.trip.name : `Morgan's Bikepacking`}
       </h1>
-      <button
-        onclick={() => goto(`${base}/`)}
-        class="border-2 border-neutral-600 py-2 px-3 mt-4 hover:border-hazy-ipa hover:text-hazy-ipa transition-all hover:text-shadow-block hover:shadow-block"
-        >HOME</button
-      >
+      {#if data.trip}
+        <button
+          onclick={() => goto(`${base}/`)}
+          class="border-2 border-neutral-600 py-2 px-3 mt-4 hover:border-hazy-ipa hover:text-hazy-ipa transition-all hover:text-shadow-block hover:shadow-block"
+          >HOME</button
+        >
+      {/if}
     </div>
     <!-- Both branches are absolutely positioned because they are mounted at the same
        time for the length of the crossfade; in normal flow the arriving one would
        be laid out below its neighbour for that stretch and the panel would jump.
        `overflow-hidden` keeps the sliding map inside the border. -->
-    <div class="flex-1 min-h-0 border-2 border-neutral-600 relative bg-blue-100 overflow-hidden">
+    <div
+      class="flex-1 min-h-0 border-0 lg:border-2 border-neutral-600 relative bg-blue-100 overflow-hidden"
+    >
       {#if data.trip && !launching}
         <div
           class="absolute inset-0"
@@ -70,6 +91,15 @@
           out:fade={{ duration: 300 }}
         >
           <BikeMap images={data.images} trip={data.trip} />
+        </div>
+      {:else if compact}
+        <div class="absolute inset-0 flex flex-col" transition:fade={{ duration: 600 }}>
+          <WheelPeloton
+            bind:this={wheel}
+            class="min-h-0 flex-1"
+            trips={tripOptions}
+            onSelect={selectTrip}
+          />
         </div>
       {:else}
         <div class="absolute inset-0 flex flex-col pt-3" transition:fade={{ duration: 600 }}>

@@ -292,13 +292,13 @@
     >
       {#each dayLabels as d (d.i)}
         <div
-          class="absolute top-0 flex h-full items-center justify-center truncate px-1 text-[13px] leading-none font-semibold transition-opacity"
+          class="absolute top-0 flex h-full items-center justify-center px-1 text-[13px] leading-none font-semibold transition-opacity"
           class:opacity-100={activeDay === null || activeDay === d.i}
           class:opacity-40={activeDay !== null && activeDay !== d.i}
           style="left: {d.left}px; width: {d.width}px; color: {d.color}"
           title={d.title}
         >
-          {d.title}
+          <span class="min-w-0 truncate">{d.title}</span>
         </div>
       {/each}
     </div>
