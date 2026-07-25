@@ -1,45 +1,51 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
-@import '@fontsource-variable/inter';
 @import '@fontsource-variable/league-spartan';
+@import '@fontsource-variable/dm-sans';
+@import '@fontsource-variable/geist-mono';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
   --color-hazy-ipa: #aa953a;
-  /* League Spartan (--font-sans) is the display face; Inter carries longer body
-     copy like the trip-journal day descriptions, where it stays readable. */
-  --font-body: 'Inter Variable', sans-serif;
+  --color-hazy-50: #fbf9ef;
+  --color-hazy-100: #f5f1db;
+  --color-hazy-200: #e9e1b9;
+  --color-hazy-300: #dbcd8f;
+  --color-hazy-400: #c9b65e;
+  --color-hazy-500: #bea741;
+  --color-hazy-600: #aa953a;
+  --color-hazy-700: #8a762e;
+  --color-hazy-800: #6d5c26;
+  --color-hazy-900: #594a22;
+  --color-hazy-950: #312811;
   --text-shadow-block:
-    -0.5px 0.5px 0px theme('colors.neutral-700'), -1px 1px 0px theme('colors.neutral-700'),
-    -1.5px 1.5px 0px theme('colors.neutral-700');
-  --shadow-block:
-    -0.5px 0.5px 0px theme('colors.neutral-700'), -1px 1px 0px theme('colors.neutral-700'),
-    -1.5px 1.5px 0px theme('colors.neutral-700'), -2px 2px 0px theme('colors.neutral-700');
+    0.5px 0.5px 0px theme('colors.neutral-700'), 1px 1px 0px theme('colors.neutral-700'),
+    1.5px 1.5px 0px theme('colors.neutral-700');
 }
 
 h1 {
   font-optical-sizing: auto;
   font-style: normal;
   font-weight: 700;
-  color: #aa953a;
+  color: theme('colors.hazy-ipa');
   letter-spacing: 3px;
   text-shadow:
-    -0.5px 0.5px 0px theme('colors.neutral-700'),
-    -1px 1px 0px theme('colors.neutral-700'),
-    -1.5px 1.5px 0px theme('colors.neutral-700'),
-    -2px 2px 0px theme('colors.neutral-700'),
-    -2.5px 2.5px 0px theme('colors.neutral-700'),
-    -3px 3px 0px theme('colors.neutral-700'),
-    -3.5px 3.5px 0px theme('colors.neutral-700'),
-    -4px 4px 0px theme('colors.neutral-700'),
-    -4.5px 4.5px 0px theme('colors.neutral-700'),
-    -5px 5px 0px theme('colors.neutral-700'),
-    -5.5px 5.5px 0px theme('colors.neutral-700'),
-    -6px 6px 0px theme('colors.neutral-700'),
-    -6.5px 6.5px 0px theme('colors.neutral-700'),
-    -7px 7px 0px theme('colors.neutral-700');
+    0.5px 0.5px 0px theme('colors.neutral-700'),
+    1px 1px 0px theme('colors.neutral-700'),
+    1.5px 1.5px 0px theme('colors.neutral-700'),
+    2px 2px 0px theme('colors.neutral-700'),
+    2.5px 2.5px 0px theme('colors.neutral-700'),
+    3px 3px 0px theme('colors.neutral-700'),
+    3.5px 3.5px 0px theme('colors.neutral-700'),
+    4px 4px 0px theme('colors.neutral-700'),
+    4.5px 4.5px 0px theme('colors.neutral-700'),
+    5px 5px 0px theme('colors.neutral-700'),
+    5.5px 5.5px 0px theme('colors.neutral-700'),
+    6px 6px 0px theme('colors.neutral-700'),
+    6.5px 6.5px 0px theme('colors.neutral-700'),
+    7px 7px 0px theme('colors.neutral-700');
 }
 
 button {
@@ -47,32 +53,90 @@ button {
 }
 
 :root {
-  /* stone-100 — the page background. Previously set twice: an unlayered
-     `body { background-color: ... }` rule that silently beat the `@layer base`
-     `bg-background` token below. Now there is one source of truth. */
-  --background: oklch(0.97 0.001 106.424);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.852 0.199 91.936);
-  --primary-foreground: oklch(0.421 0.095 57.708);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0rem;
+  --background: oklch(0.95 0.02 85);
+  --foreground: var(--color-neutral-950);
+  --card: oklch(0.95 0.02 85);
+  --card-foreground: var(--color-neutral-950);
+  --popover: oklch(0.95 0.02 85);
+  --popover-foreground: var(--color-neutral-950);
+  --primary: var(--color-hazy-ipa);
+  --primary-foreground: var(--color-neutral-950);
+  --secondary: var(--color-blue-200);
+  --secondary-foreground: var(--color-neutral-900);
+  --muted: oklch(0.9 0.02 85);
+  --muted-foreground: var(--color-neutral-600);
+  --accent: var(--color-hazy-300);
+  --accent-foreground: var(--color-neutral-900);
+  --destructive: var(--color-red-600);
+  --border: var(--color-neutral-900);
+  --input: var(--color-neutral-900);
+  --ring: var(--color-neutral-900);
+  --chart-1: var(--color-neutral-300);
+  --chart-2: var(--color-neutral-500);
+  --chart-3: var(--color-neutral-600);
+  --chart-4: var(--color-neutral-700);
+  --chart-5: var(--color-neutral-800);
+  --radius: 1rem;
+  --sidebar: var(--color-neutral-50);
+  --sidebar-foreground: var(--color-neutral-950);
+  --sidebar-primary: var(--color-neutral-900);
+  --sidebar-primary-foreground: var(--color-neutral-50);
+  --sidebar-accent: var(--color-neutral-300);
+  --sidebar-accent-foreground: var(--color-neutral-900);
+  --sidebar-border: var(--color-neutral-900);
+  --sidebar-ring: var(--color-neutral-400);
+}
+
+.dark {
+  --background: oklch(0.3 0.01 255);
+  --foreground: var(--color-neutral-50);
+  --card: oklch(0.3 0.01 255);
+  --card-foreground: var(--color-neutral-50);
+  --popover: oklch(0.3 0.01 255);
+  --popover-foreground: var(--color-neutral-50);
+  --primary: var(--color-hazy-ipa);
+  --primary-foreground: var(--color-neutral-950);
+  --secondary: var(--color-blue-400);
+  --secondary-foreground: var(--color-neutral-950);
+  --muted: oklch(0.35 0.01 255);
+  --muted-foreground: var(--color-neutral-300);
+  --accent: var(--color-orange-800);
+  --accent-foreground: var(--color-neutral-50);
+  --destructive: var(--color-red-500);
+  --border: var(--color-neutral-950);
+  --input: var(--color-neutral-950);
+  --ring: var(--color-neutral-950);
+  --chart-1: var(--color-neutral-300);
+  --chart-2: var(--color-neutral-500);
+  --chart-3: var(--color-neutral-600);
+  --chart-4: var(--color-neutral-700);
+  --chart-5: var(--color-neutral-800);
+  --sidebar: var(--color-neutral-800);
+  --sidebar-foreground: var(--color-neutral-50);
+  --sidebar-primary: var(--color-hazy-ipa);
+  --sidebar-primary-foreground: var(--color-neutral-950);
+  --sidebar-accent: var(--color-neutral-700);
+  --sidebar-accent-foreground: var(--color-neutral-50);
+  --sidebar-border: var(--color-neutral-950);
+  --sidebar-ring: var(--color-neutral-950);
 }
 
 @theme inline {
-  --font-sans: 'League Spartan Variable', sans-serif;
+  --font-sans: 'DM Sans Variable', sans-serif;
+  --font-mono: 'Geist Mono Variable', monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -98,6 +162,31 @@ button {
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --default-border-width: 2px;
+  --default-ring-width: var(--default-border-width);
+  --shadow-width: 4px;
+  --shadow-2xs: calc(var(--shadow-width) * 0.25) calc(var(--shadow-width) * 0.25) 0px
+    var(--color-border);
+  --shadow-xs: calc(var(--shadow-width) * 0.5) calc(var(--shadow-width) * 0.5) 0px
+    var(--color-border);
+  --shadow-sm: calc(var(--shadow-width) * 0.75) calc(var(--shadow-width) * 0.75) 0px
+    var(--color-border);
+  --shadow-md: calc(var(--shadow-width) * 1) calc(var(--shadow-width) * 1) 0px var(--color-border);
+  --shadow-lg: calc(var(--shadow-width) * 1.5) calc(var(--shadow-width) * 1.5) 0px
+    var(--color-border);
+  --shadow-xl: calc(var(--shadow-width) * 2) calc(var(--shadow-width) * 2) 0px var(--color-border);
+  --shadow-2xl: calc(var(--shadow-width) * 3) calc(var(--shadow-width) * 3) 0px var(--color-border);
+
+  --animate-slide-gradient: slide-gradient 3s linear infinite;
+  @keyframes slide-gradient {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
 }
 
 @layer base {
