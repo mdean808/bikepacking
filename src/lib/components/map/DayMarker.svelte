@@ -17,8 +17,6 @@
 
 <Marker {lnglat}>
   {#snippet content()}
-    <!-- The name pill sits outside this div's box: widening the box on hover would
-         move the point maplibre centres the marker on. -->
     <div class="group relative">
       <button
         class="relative z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 bg-white text-xs font-bold text-gray-700 shadow-sm transition-transform group-hover:scale-110"

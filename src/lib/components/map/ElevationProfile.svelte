@@ -173,7 +173,7 @@
 </script>
 
 <div
-  class="absolute inset-x-0 bottom-0 z-30 h-[22%] max-h-[190px] min-h-[110px] border-t border-white/15 bg-black/55 text-white backdrop-blur-sm"
+  class="absolute inset-x-0 bottom-0 z-30 h-[22%] max-h-47.5 min-h-27.5 border-t border-white/15 bg-black/55 text-white backdrop-blur-sm"
   bind:clientWidth={w}
   bind:clientHeight={h}
 >
@@ -221,11 +221,8 @@
         >
       {/each}
       {#if endKm > 0}
-        <text
-          x={chart.x(endKm)}
-          y={chartH - 5}
-          text-anchor="end"
-          class="fill-white/70 text-[10px]">{endKm} km</text
+        <text x={chart.x(endKm)} y={chartH - 5} text-anchor="end" class="fill-white/70 text-[10px]"
+          >{endKm} km</text
         >
       {/if}
 

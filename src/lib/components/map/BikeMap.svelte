@@ -57,7 +57,6 @@
     return () => hover.leaveProfile();
   });
 
-  /** Scrolls to day `i`'s card in the journal below the map. */
   const scrollToDay = (i: number) => {
     document.getElementById(`day-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };

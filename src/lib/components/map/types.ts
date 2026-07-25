@@ -1,9 +1,7 @@
 export interface Image {
   description: string;
-  /** Geotag read from EXIF. */
   loc: { lng: number; lat: number } | null;
-  /** Capture time, in epoch milliseconds. */
-  takenAt: number | null;
+  takenAt: number | null; // in epoch milliseconds
   type: 'image' | 'video';
   thumbnail: string;
   preview: string;

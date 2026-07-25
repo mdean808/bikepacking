@@ -7,8 +7,7 @@
 
   interface Props {
     open?: boolean;
-    /** The whole trip's assets, in capture-time order. */
-    images: Image[];
+    images: Image[]; // In capture-time order
     index?: number;
   }
 
