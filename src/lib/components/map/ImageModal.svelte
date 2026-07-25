@@ -2,7 +2,7 @@
   import panzoom from 'panzoom';
   import type { PanZoom } from 'panzoom';
   import { ChevronLeft, ChevronRight } from '@lucide/svelte';
-  import Modal from '$lib/components/Modal.svelte';
+  import * as Dialog from '$lib/components/ui/dialog/index.js';
   import type { Image } from './types';
 
   interface Props {
@@ -101,68 +101,72 @@
   </button>
 {/snippet}
 
-<Modal bind:open title="Photo {index + 1} of {images.length}">
-  {#if image}
-    <div class="flex h-full flex-col gap-4">
-      <div
-        class="relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-neutral-100"
-        class:cursor-grab={!isVideo}
-        class:active:cursor-grabbing={!isVideo}
-      >
-        {#if !loaded}
-          <div class="absolute inset-0 flex items-center justify-center">
-            <div
-              class="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600"
-            ></div>
-          </div>
-        {/if}
-        <!-- panzoom takes the image's *parent* as its owner and binds dblclick,
-             mousedown and wheel there. Giving the media its own wrapper keeps that
-             owner free of the nav buttons: a double-click on a chevron can never
-             reach it, even on the click that unmounts the button at either end of
-             the sequence (where a dblclick would otherwise retarget to whatever
-             ancestor the two clicks share). -->
-        <div class="absolute inset-0 overflow-hidden">
-          {#if isVideo}
-            <!-- svelte-ignore a11y_media_has_caption -->
-            <video
-              src={image.video}
-              poster={image.preview}
-              controls
-              autoplay
-              playsinline
-              onloadeddata={() => (loaded = true)}
-              class="h-full w-full object-contain transition-opacity duration-300"
-              class:opacity-0={!loaded}
-            ></video>
-          {:else}
-            <img
-              bind:this={imgEl}
-              src={image.fullsize}
-              alt={image.description || 'Trip photo'}
-              onload={() => (loaded = true)}
-              class="h-full w-full object-contain transition-opacity duration-300"
-              class:opacity-0={!loaded}
-            />
+<Dialog.Root bind:open>
+  <Dialog.Content>
+    <!-- Accessible name only; the visible counter lives with the caption below. -->
+    <Dialog.Title class="sr-only">Photo {index + 1} of {images.length}</Dialog.Title>
+    {#if image}
+      <div class="flex h-full flex-col gap-4">
+        <div
+          class="relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-neutral-100"
+          class:cursor-grab={!isVideo}
+          class:active:cursor-grabbing={!isVideo}
+        >
+          {#if !loaded}
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div
+                class="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600"
+              ></div>
+            </div>
           {/if}
+          <!-- panzoom takes the image's *parent* as its owner and binds dblclick,
+               mousedown and wheel there. Giving the media its own wrapper keeps that
+               owner free of the nav buttons: a double-click on a chevron can never
+               reach it, even on the click that unmounts the button at either end of
+               the sequence (where a dblclick would otherwise retarget to whatever
+               ancestor the two clicks share). -->
+          <div class="absolute inset-0 overflow-hidden">
+            {#if isVideo}
+              <!-- svelte-ignore a11y_media_has_caption -->
+              <video
+                src={image.video}
+                poster={image.preview}
+                controls
+                autoplay
+                playsinline
+                onloadeddata={() => (loaded = true)}
+                class="h-full w-full object-contain transition-opacity duration-300"
+                class:opacity-0={!loaded}
+              ></video>
+            {:else}
+              <img
+                bind:this={imgEl}
+                src={image.fullsize}
+                alt={image.description || 'Trip photo'}
+                onload={() => (loaded = true)}
+                class="h-full w-full object-contain transition-opacity duration-300"
+                class:opacity-0={!loaded}
+              />
+            {/if}
+          </div>
+
+          {#if hasPrev}{@render navButton('prev')}{/if}
+          {#if hasNext}{@render navButton('next')}{/if}
         </div>
 
-        {#if hasPrev}{@render navButton('prev')}{/if}
-        {#if hasNext}{@render navButton('next')}{/if}
+        <!-- Caption (the asset's Immich description) stacks above the counter, so a
+             photo with no description just shows the count. -->
+        <div class="flex flex-col gap-1">
+          {#if image.description}
+            <p class="text-sm leading-relaxed text-gray-700">{image.description}</p>
+          {/if}
+          {#if images.length > 1}
+            <span class="shrink-0 self-end text-sm tabular-nums text-gray-400">
+              {index + 1} / {images.length}
+            </span>
+          {/if}
+        </div>
       </div>
-
-      <!-- Caption (the asset's Immich description) stacks above the counter, so a
-           photo with no description just shows the count. -->
-      <div class="flex flex-col gap-1">
-        {#if image.description}
-          <p class="text-sm leading-relaxed text-gray-700">{image.description}</p>
-        {/if}
-        {#if images.length > 1}
-          <span class="shrink-0 self-end text-sm tabular-nums text-gray-400">
-            {index + 1} / {images.length}
-          </span>
-        {/if}
-      </div>
-    </div>
-  {/if}
-</Modal>
+    {/if}
+  </Dialog.Content>
+</Dialog.Root>
