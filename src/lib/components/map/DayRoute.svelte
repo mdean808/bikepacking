@@ -7,8 +7,6 @@
     index: number;
     color: string;
     offset: number;
-    // hovered/dimmed are driven externally (day markers, elevation profile) — the
-    // route line itself is inert to the mouse, so it has no event handlers.
     hovered?: boolean;
     dimmed?: boolean;
   }

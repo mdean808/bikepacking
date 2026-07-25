@@ -4,9 +4,7 @@
 
   let { trip }: { trip: Trip } = $props();
 
-  // The numbered badge already carries the day number, so strip a leading
-  // "Day N:" from the title to avoid saying it twice. Falls back to the whole
-  // title when it doesn't match that shape.
+  /** Strips a leading "Day 3:" prefix from a day title. */
   const heading = (title: string) => title.replace(/^day\s+\d+\s*[:.–-]\s*/i, '') || title;
 </script>
 
@@ -18,11 +16,8 @@
   <ol class="mx-auto flex max-w-3xl flex-col gap-6">
     {#each trip.days as day, i (i)}
       {@const color = dayColor(i)}
-      <!-- id is the scroll target for the map's day marker (see BikeMap.scrollToDay).
-           scroll-mt keeps the heading clear of the viewport's top edge on arrival. -->
+      <!-- BikeMap's scrollToDay looks this id up. -->
       <li id="day-{i}" class="shadow-block flex scroll-mt-6 border-2 border-neutral-700 bg-white">
-        <!-- Colour stripe + numbered badge tie each card back to its route and
-             pin on the map. -->
         <div class="w-2 shrink-0" style="background-color: {color}"></div>
         <div class="flex flex-1 gap-4 p-5">
           <div

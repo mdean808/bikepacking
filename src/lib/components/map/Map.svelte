@@ -5,15 +5,13 @@
 
   interface Props {
     cursor?: string;
-    /** [minX, minY, maxX, maxY] — the map fits to this whenever it changes. */
     bounds?: [number, number, number, number] | null;
-    /** Bindable so a parent can drive the map imperatively (e.g. recenter). */
     map?: maplibregl.Map;
     children?: Snippet;
   }
 
-  // Google hybrid tiles: satellite imagery with roads and labels baked in.
-  // Base https://madewithmaplibre.com/basemaps/styles/google-satellite with lyrs=y.
+  // lyrs=y is Google's hybrid layer: satellite imagery with roads and labels baked
+  // in. Based on https://madewithmaplibre.com/basemaps/styles/google-satellite.
   const satelliteWithRoads: maplibregl.StyleSpecification = {
     version: 8,
     sources: {

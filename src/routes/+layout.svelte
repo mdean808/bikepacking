@@ -10,7 +10,7 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 <div class="flex min-h-screen flex-col">
-  <div class="px-0 py-5 lg:px-30 h-[88vh] flex flex-col gap-5">
+  <div class="px-0 py-5 lg:px-30 gap-5">
     <a href="/" class="mx-auto text-center">
       <h1 class="text-6xl uppercase w-fit mx-auto">
         {#if isHome}

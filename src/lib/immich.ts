@@ -10,9 +10,10 @@ import {
 
 init({ baseUrl: IMMICH_URL, apiKey: IMMICH_API_KEY });
 
-// Immich's /thumbnail and /original endpoints always require auth. A shared link
-// adds a `key` query param that bypasses auth for that album's assets, so the
-// browser can load them directly. Reuse an existing link if one exists.
+/**
+ * Returns a share key for an album, creating the shared link if one doesn't exist
+ * yet. The key lets the browser load that album's assets without authenticating.
+ */
 export const getAlbumShareKey = async (albumId: string): Promise<string> => {
   const existing = await getAllSharedLinks({ albumId });
   const link =
@@ -44,6 +45,7 @@ const paginateAlbumAssets = async (id: string, page: number = 1) => {
   };
 };
 
+/** Fetches every asset in an album, following pagination to the last page. */
 export const getAllAlbumAssets = async (id: string) => {
   let page: number | null = 1;
   const assets: AssetResponseDto[] = [];

@@ -4,49 +4,37 @@ import { along } from '@turf/along';
 import { distance } from '@turf/distance';
 import type { Feature, FeatureCollection, LineString, Position } from 'geojson';
 
-// Elevation/distance model for a whole trip, in metric units throughout.
-//
-// A trip is several day tracks (each its own FeatureCollection). This module
-// stitches them into one continuous distance axis so a single elevation profile
-// can span the trip while still knowing which day any point belongs to. It is
-// pure and framework-free; BikeMap computes it once per trip via $derived.by.
+// Joins a trip's day tracks, each its own FeatureCollection, onto one continuous
+// distance axis. That lets a single elevation profile span the whole trip and
+// still say which day any point on it belongs to. Distances are km, elevations m.
 
 export interface ElevationPoint {
   /** Cumulative distance from the trip's start, in km. */
   distanceKm: number;
   elevationM: number;
-  /** Which day this point belongs to — drives per-day colouring. */
   dayIndex: number;
 }
 
 export interface TripElevation {
-  /**
-   * Each day flattened to a single 2D LineString, at full GPX resolution, for
-   * the per-frame hover snapping (nearestPointOnLine / along), which touches one
-   * day at a time and wants a smooth result.
-   */
+  /** Each day flattened to one 2D LineString at full GPX resolution. */
   dayLines: Feature<LineString>[];
   /**
-   * The same lines heavily downsampled (~hundreds of points), for snapping every
-   * photo at load. Full res there was O(photos × 74k) and froze the page; roads
-   * are smooth enough that a coarse line still snaps on-route points accurately.
+   * The same lines downsampled to a few hundred points each. Photo snapping runs
+   * against these, because doing it at full resolution is O(photos × points).
    */
   dayLinesCoarse: Feature<LineString>[];
   /** Cumulative trip distance (km) at the start of each day. */
   dayOffsetsKm: number[];
   /** Length (km) of each day. */
   dayLengthsKm: number[];
-  /**
-   * Downsampled points for chart rendering, ordered along the trip. Full-
-   * resolution geometry stays in `dayLines`; only the drawn curve is thinned.
-   */
+  /** The points the chart draws, thinned from `dayLines` and ordered along the trip. */
   series: ElevationPoint[];
   totalKm: number;
   minElevationM: number;
   maxElevationM: number;
 }
 
-/** Flatten a day's (Multi)LineString features into one coordinate array. */
+/** Flattens a day's (Multi)LineString features into one coordinate array. */
 const dayCoords = (fc: FeatureCollection): Position[] => {
   const coords: Position[] = [];
   for (const f of fc.features) {
@@ -57,22 +45,19 @@ const dayCoords = (fc: FeatureCollection): Position[] => {
   return coords;
 };
 
-// Target vertex count per day for the coarse photo-anchoring lines. High enough
-// to trace the road faithfully, low enough that snapping a big album is quick.
+/** How many points each day keeps in `dayLinesCoarse`. */
 const ANCHOR_PTS_PER_DAY = 400;
 
 /**
- * Build the trip-wide elevation model.
+ * Builds a trip's elevation model from its day tracks.
  *
- * Cumulative distance is accumulated in a single O(n) pass over consecutive
- * points (using @turf/distance so it matches nearestPointOnLine's `location`
- * metric exactly) — deliberately NOT turf.length over progressive slices, which
- * would be O(n²) and hang the page on a 70k-point trip.
+ * `targetPoints` caps how many points reach `series`, trading render cost against
+ * how much fine relief the drawn curve keeps. Hit-testing is unaffected, as it
+ * reads `dayLines` at full resolution.
  *
- * The chart series is thinned by an index stride derived from `targetPoints`,
- * always keeping each day's first and last point. `targetPoints` is the single
- * tunable that trades render cost against how much fine relief the curve keeps;
- * hit-testing is unaffected because it uses `dayLines` at full resolution.
+ * Distance accumulates in one O(n) pass using @turf/distance, which matches the
+ * metric nearestPointOnLine reports. turf.length over progressive slices would
+ * instead be O(n²).
  */
 export const buildTripElevation = (
   days: FeatureCollection[],
@@ -96,8 +81,8 @@ export const buildTripElevation = (
     const coords = allCoords[di];
     dayOffsetsKm[di] = cumulative;
 
-    // A degenerate day (0–1 points) still needs placeholder entries so indexes
-    // line up; give turf a valid 2-point line it can never match usefully.
+    // Under two points can't form a line. Store a stub turf accepts but will
+    // never match usefully, so the day indexes still line up.
     if (coords.length < 2) {
       const seed: Position = coords[0] ?? [0, 0];
       dayLines[di] = lineString([seed, seed]);
@@ -109,7 +94,6 @@ export const buildTripElevation = (
     const flat = coords.map((c) => [c[0], c[1]]);
     dayLines[di] = lineString(flat);
 
-    // Keep every anchorStride-th vertex (plus the last) for the coarse line.
     const anchorStride = Math.max(1, Math.floor(flat.length / ANCHOR_PTS_PER_DAY));
     const coarse = flat.filter((_, i) => i % anchorStride === 0 || i === flat.length - 1);
     dayLinesCoarse[di] = lineString(coarse);
@@ -144,7 +128,7 @@ export const buildTripElevation = (
   };
 };
 
-/** Which day a cumulative trip distance falls in (last day whose start it passed). */
+/** Returns the index of the day a cumulative trip distance falls within. */
 const dayAtDistance = (elev: TripElevation, distanceKm: number): number => {
   let di = 0;
   for (let i = 0; i < elev.dayOffsetsKm.length; i++) {
@@ -155,8 +139,8 @@ const dayAtDistance = (elev: TripElevation, distanceKm: number): number => {
 };
 
 /**
- * Trip distance → position on the map. Used for the profile→map direction:
- * turf.along the containing day's line at the day-local distance.
+ * Returns the map coordinate at a cumulative trip distance, and the day it falls
+ * in. Null when the trip has no lines.
  */
 export const pointAtDistance = (
   elev: TripElevation,
@@ -170,9 +154,8 @@ export const pointAtDistance = (
 };
 
 /**
- * Map position → trip distance. Used for the map→profile direction: the hovered
- * DayRoute layer supplies the day index, so we only snap within that one day and
- * add its offset. `totalDistance` is turf's distance-along-line in km.
+ * Returns the cumulative trip distance of the point on day `dayIndex` nearest the
+ * given coordinate. The caller already knows the day, so only that one is searched.
  */
 export const distanceAlongDay = (
   elev: TripElevation,
@@ -185,14 +168,13 @@ export const distanceAlongDay = (
 };
 
 /**
- * Snap an arbitrary point (a photo's geotag) onto the route: the nearest spot
- * across all days, as a trip distance + the elevation there. `offRouteKm` is how
- * far the point sat from the line, so callers can drop wildly off-route photos.
+ * Finds where an arbitrary point, such as a photo's geotag, sits on the route.
+ * Searches every day for the nearest spot and returns that day, its cumulative
+ * trip distance, the elevation there, and how far off the line the point was, so
+ * callers can drop photos taken nowhere near the route.
  *
- * Runs against `dayLinesCoarse`, not the full-resolution lines. turf's snapping
- * interpolates along each segment, so a point on (say) day 1's line still matches
- * day 1 even where day 0 runs close — which the coarse line preserves because
- * roads are smooth. Full res here cost ~80ms/photo and froze the page at mount.
+ * Searches `dayLinesCoarse` rather than the full-resolution lines, as this runs
+ * once per photo.
  */
 export const anchorOnRoute = (
   elev: TripElevation,
@@ -218,7 +200,10 @@ export const anchorOnRoute = (
   };
 };
 
-/** Interpolated elevation at a trip distance, for the hover read-out. */
+/**
+ * Returns the elevation at a cumulative trip distance, interpolated between the
+ * two nearest series points. Clamps to the first and last point beyond the ends.
+ */
 export const elevationAtDistance = (elev: TripElevation, distanceKm: number): number | null => {
   const s = elev.series;
   if (!s.length) return null;

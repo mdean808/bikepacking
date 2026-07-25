@@ -16,24 +16,15 @@
 
   const { images, trip }: { images: Image[]; trip: Trip } = $props();
 
-  // Owns the route / day-marker / image-marker hover precedence and the cursor.
   const hover = createHoverState();
-
-  // Owns the shared cursor position along the elevation profile (map <-> profile).
   const routeHover = createRouteHover();
 
-  // Trip-wide distance/elevation model. Computed once per trip: the day GeoJSON
-  // is already in the client (the map draws from it), so this reuses it rather
-  // than re-parsing GPX. See src/lib/elevation.ts for the O(n) rationale.
   const elevation = $derived.by(() => buildTripElevation(trip.days.map((d) => d.geoJSON)));
 
-  // Where the map dot sits for the current hover, whoever set it.
   const hoverPoint = $derived(
     routeHover.distanceKm == null ? null : pointAtDistance(elevation, routeHover.distanceKm)
   );
 
-  // Each geotagged photo pinned to its distance/elevation along the route, sorted
-  // for the profile's left-to-right clustering. Computed once per trip.
   const photoAnchors = $derived.by<PhotoAnchor[]>(() =>
     images
       .flatMap((image) => {
@@ -43,24 +34,18 @@
       })
       .sort((a, b) => a.distanceKm - b.distanceKm)
   );
-  // globalThis.Map: the `Map` component import shadows the built-in here.
+  // globalThis.Map, because the `Map` component import shadows the built-in here.
   const dayByImage = $derived(
     new globalThis.Map(photoAnchors.map((a) => [a.image, a.dayIndex] as const))
   );
 
-  // The one photo highlighted across both surfaces (map marker <-> profile dot).
   let hoveredImage = $state<Image | null>(null);
-
-  // Bound to the underlying maplibre map so the profile can recenter it on click.
   let map = $state<maplibregl.Map>();
   const centerOn = (distanceKm: number) => {
     const pt = pointAtDistance(elevation, distanceKm);
     if (pt && map) map.easeTo({ center: [pt.lng, pt.lat], duration: 600 });
   };
 
-  // Profile -> map dimming: hovering the profile highlights that day (and dims
-  // the others) through the same day-precedence system a map-route hover uses.
-  // Its own slot in HoverState, so this never fights an actual route hover.
   const profileDay = $derived(
     routeHover.source === 'profile' && routeHover.distanceKm != null && hoverPoint
       ? hoverPoint.dayIndex
@@ -72,8 +57,7 @@
     return () => hover.leaveProfile();
   });
 
-  // Clicking a day's start marker jumps the reader down to that day's entry in
-  // the journal below the map. The journal tags each entry with `day-<index>`.
+  /** Scrolls to day `i`'s card in the journal below the map. */
   const scrollToDay = (i: number) => {
     document.getElementById(`day-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -85,12 +69,11 @@
 
   const bounds = $derived(routeBounds(fullGeoJson));
 
-  // One continuous sequence for the modal's prev/next, in capture-time order, so
-  // paging left/right walks the trip as it happened. See orderImagesByTime.
   const orderedImages = $derived(orderImagesByTime(images));
 
   let modalIndex: number = $state(0);
   let modalOpen: boolean = $state(false);
+
   const openImageModal = (image: Image) => {
     const i = orderedImages.indexOf(image);
     modalIndex = i === -1 ? 0 : i;
@@ -102,9 +85,7 @@
   <Map bind:map cursor={hover.cursor} {bounds}>
     {#each images as image (image.thumbnail)}
       {@const loc = image.loc}
-      <!-- Ungeotagged photos get no marker. They previously rendered at the -1/-1
-         sentinel, dropping a pin in the Gulf of Guinea. They remain reachable in
-         the lightbox, where they sit in capture-time order like everything else. -->
+      <!-- Photos with no geotag get no marker, but are still in the lightbox. -->
       {#if loc}
         {@const imageDay = dayByImage.get(image)}
         <ImageMarker
@@ -152,7 +133,6 @@
       {/if}
     {/each}
 
-    <!-- The dot tracking the hovered distance, whichever side is driving. -->
     {#if hoverPoint}
       <HoverMarker
         lnglat={{ lng: hoverPoint.lng, lat: hoverPoint.lat }}

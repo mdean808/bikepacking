@@ -4,14 +4,9 @@
 
   interface Props {
     image: Image;
-    /** Where to place the marker. Passed separately because Image['loc'] is
-     * nullable and the caller has already established this one is not. */
     loc: { lng: number; lat: number };
-    /** When another day is spotlighted, this photo fades back so the active day reads. */
     dimmed?: boolean;
-    /** Cross-highlight: its twin (a profile dot, or itself) is hovered — enlarge + ring. */
     highlighted?: boolean;
-    /** Day colour, for the highlight ring. */
     color?: string;
     onselect?: (image: Image) => void;
     onhover?: () => void;

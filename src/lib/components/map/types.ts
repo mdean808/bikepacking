@@ -1,23 +1,21 @@
 export interface Image {
   description: string;
-  /** Geotag from EXIF, or null when the asset has no usable coordinates. */
+  /** Geotag read from EXIF. */
   loc: { lng: number; lat: number } | null;
-  /** Capture instant in ms, or null when the asset carries no usable timestamp. */
+  /** Capture time, in epoch milliseconds. */
   takenAt: number | null;
   type: 'image' | 'video';
   thumbnail: string;
   preview: string;
   fullsize: string;
-  /** Playback URL, only set for videos. */
   video?: string;
 }
 
-/** A photo pinned to its place along the route — see anchorOnRoute in elevation.ts. */
+/** Where a photo sits along the route, as returned by anchorOnRoute in elevation.ts. */
 export interface PhotoAnchor {
   image: Image;
   dayIndex: number;
   distanceKm: number;
   elevationM: number;
-  /** Distance from the photo's geotag to the route line, in km. */
   offRouteKm: number;
 }

@@ -2,37 +2,38 @@ import { bbox } from '@turf/bbox';
 import type { FeatureCollection } from 'geojson';
 import type { Image } from '$lib/components/map/types';
 
-// Ordered so consecutive days never share a hue family — each neighbouring pair
-// is at least ~75° apart on the colour wheel, which keeps adjacent routes legible.
+/** Route colours, ordered so consecutive days never share a hue family. */
 export const DAY_COLORS = [
-  '#F3722C', // orange
-  '#4361EE', // blue
-  '#E63946', // red
-  '#43AA8B', // teal green
-  '#F72585', // pink/magenta
-  '#F9C74F', // gold
-  '#7209B7' // purple
+  '#F3722C',
+  '#4361EE',
+  '#E63946',
+  '#43AA8B',
+  '#F72585',
+  '#F9C74F',
+  '#7209B7'
 ];
 
-// Days cycle back through the palette once a trip runs longer than DAY_COLORS.
 export const dayColor = (i: number): string => DAY_COLORS[i % DAY_COLORS.length];
 
-// [minX, minY, maxX, maxY] for a collection, or null when there is nothing to
-// fit — @turf/bbox returns Infinities on an empty FeatureCollection, which
-// maplibre's fitBounds cannot consume.
+/**
+ * Returns a route's bounding box as [minLng, minLat, maxLng, maxLat], or null
+ * when the collection is empty — @turf/bbox returns Infinities for that, which
+ * fitBounds cannot use.
+ */
 export const routeBounds = (fc: FeatureCollection): [number, number, number, number] | null =>
   fc.features.length ? (bbox(fc) as [number, number, number, number]) : null;
 
-// Days often share long stretches of road, where identical lines would draw on
-// top of each other and only the last day would be visible. Fan them out around
-// the centre of the stack — with 4 days the offsets run -3, -1, 1, 3 — so every
-// day stays individually clickable. Units are DayRoute's line-offset pixels.
+/**
+ * Returns the sideways offset to draw day `i` of `total` at, spread evenly
+ * around zero (4 days → -3, -1, 1, 3). Days that follow the same road would
+ * otherwise be drawn on top of each other, hiding all but the last.
+ */
 export const dayLineOffset = (i: number, total: number): number => (i - (total - 1) / 2) * 2;
 
-// Order images the way the trip was actually lived: earliest capture first.
-// Photos with no usable timestamp keep their original relative order and sink to
-// the end, so they stay reachable in the lightbox without interleaving noise into
-// the dated sequence.
+/**
+ * Sorts images oldest first by capture time. Images with no timestamp go last,
+ * keeping the order they came in.
+ */
 export const orderImagesByTime = (images: Image[]): Image[] =>
   images
     .map((image, order) => ({ image, order }))
@@ -47,7 +48,7 @@ export const orderImagesByTime = (images: Image[]): Image[] =>
     })
     .map((r) => r.image);
 
-// First coordinate of the first (multi)line in a collection — the route's start point.
+/** Returns the first coordinate of a route's first line, or null if it has none. */
 export const getRouteStart = (fc: FeatureCollection): [number, number] | null => {
   for (const f of fc.features) {
     if (f.geometry.type === 'LineString' && f.geometry.coordinates.length > 0) {

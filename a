@@ -1,0 +1,87 @@
+In BikeMap.svelte:
+
+Is this not it's LOCATION?
+  /** Every geotagged photo pinned to its distance along the route. */
+  const photoAnchors = $derived.by<PhotoAnchor[]>(() =>
+
+This doesn't explain what the derived does, just the variable content. Derives are like functions and should explain what they do.
+/** Which day each photo belongs to. globalThis.Map — the `Map` import shadows it. */
+const dayByImage = $derived(
+  new globalThis.Map(photoAnchors.map((a) => [a.image, a.dayIndex] as const))
+);
+
+In DayMarker.svelte
+WHY IS THIS HERE? DELETE IT.
+/** Day title, shown in the pill that slides out on hover. */
+name?: string;
+
+This odens't make any sense. What is this talking about?
+<!-- maplibre pins this box to the coordinate, so the pill is positioned
+      absolutely: letting it grow in flow would drag the anchor with it. -->
+<div class="group relative">
+
+in DayRoute.svelte
+
+WHY IS THIS HERE? DELETE IT. 
+/** Thickens the line. Set by the day marker or profile — the line has no handlers. */
+hovered?: boolean;
+/** Fades the line while a different day is highlighted. */
+dimmed?: boolean;
+
+in ElevationPRopfile.svelte
+
+Yeah no fucking shit -- it's an elevation profile. If you need to comment why we're ignoring a11y, you say: Ignoring becuase interaction is click-only. OR SIMILAR.
+
+    <!-- Interaction is inherently position-based, like a canvas: hover and click
+         map to a distance along the route, with no keyboard equivalent. -->
+
+What hte fuck is the point of this comment? What does SVG have to do with anything? DELTE IT.
+
+<!-- HTML rather than SVG, which has no text truncation. -->
+<div
+  class="pointer-events-none absolute inset-x-0 bottom-0 select-none"
+  style="height: {LABEL_BAND}px"
+>
+  {#each dayLabels as d (d.i)}
+    <div
+      class="absolute top-0 flex h-full items-center justify-center px-1 text-[13px] leading-none font-semibold transition-opacity"
+      class:opacity-100={activeDay === null || activeDay === d.i}
+      class:opacity-40={activeDay !== null && activeDay !== d.i}
+      style="left: {d.left}px; width: {d.width}px; color: {d.color}"
+      title={d.title}
+    >
+      <span class="min-w-0 truncate">{d.title}</span>
+    </div>
+  {/each}
+</div>
+
+
+in ImageModal.svelte
+
+No Fucking shit i can read the code.
+
+  /** Pages through the sequence on arrow keys while the modal is open. */
+  const onKeydown = (e: KeyboardEvent) => {
+    if (!open) return;
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prev();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      next();
+    }
+  };
+
+
+huh? "Set up Pan and Zoom for images. Ignore for videos, which don't have imgEl defined"
+
+  // Pan/zoom the still image. A no-op for videos, which leave imgEl undefined.
+  $effect(() => {
+    if (!imgEl) return;
+    pz = panzoom(imgEl, {
+
+
+
+Do you understand about commenting now? Fucking idiot.
+
+

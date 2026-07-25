@@ -6,33 +6,26 @@
   interface Props {
     elevation: TripElevation;
     hover: RouteHoverState;
-    /** Per-day metadata, ordered like the days — supplies the segment name labels. */
     days?: { title: string; description: string }[];
-    /** Fired when a spot on the profile is clicked, so the map can recenter there. */
     oncenter?: (distanceKm: number) => void;
   }
 
   let { elevation, hover, days, oncenter }: Props = $props();
 
-  // --- Tunable layout constants ------------------------------------------------
-  // The overlay height is driven by the container (see the class on the wrapper:
-  // ~1/6 of the map, clamped) and measured into `h`. PAD reserves room for the
-  // axis labels. Adjust these to retune density/spacing without touching logic.
+  /** Inset in px around the plot, leaving room for the axis labels. */
   const PAD = { top: 14, right: 14, bottom: 18, left: 48 };
-  // Height (px) of the day-name strip reserved along the bottom, below the chart.
+  /** Height in px of the day-name strip below the chart. */
   const LABEL_BAND = 22;
 
-  // Measured overlay size; paths recompute from these so nothing is distorted.
   let w = $state(0);
   let h = $state(0);
   let svgEl: SVGSVGElement | undefined = $state();
 
-  // The chart (SVG) occupies everything above the day-name band.
   const chartH = $derived(Math.max(1, h - LABEL_BAND));
 
   const hasData = $derived(elevation.series.length > 1 && elevation.totalKm > 0);
 
-  // Scales + plot box, recomputed on resize.
+  /** Plot box, plus `x` and `y` mapping km and metres to pixel coordinates. */
   const chart = $derived.by(() => {
     const plotW = Math.max(1, w - PAD.left - PAD.right);
     const plotH = Math.max(1, chartH - PAD.top - PAD.bottom);
@@ -46,8 +39,6 @@
     return { plotW, plotH, total, baseY, x, y };
   });
 
-  // One filled area + stroked line per day, in the day's colour. Split whenever
-  // dayIndex changes so each segment can be coloured independently.
   const dayPaths = $derived.by(() => {
     const { x, y, baseY } = chart;
     const groups: { dayIndex: number; line: string; area: string }[] = [];
@@ -79,16 +70,11 @@
     return groups;
   });
 
-  // Faint verticals where one day hands off to the next.
   const dayBoundaries = $derived(elevation.dayOffsetsKm.slice(1).map((km) => chart.x(km)));
 
-  // Total trip distance, shown as a fixed end label mirroring the 0 km origin.
   const endKm = $derived(Math.round(elevation.totalKm * 10) / 10);
 
-  // ~5 evenly-spaced, round-numbered distance ticks. The last round tick is
-  // dropped when it would crowd the end label (which always shows the exact
-  // total), so 0 km and the total anchor the two ends and the round marks fill in
-  // between without colliding.
+  /** About 5 round-numbered distance ticks, minus any that would crowd the end label. */
   const kmTicks = $derived.by(() => {
     const total = elevation.totalKm;
     if (!total) return [] as number[];
@@ -97,7 +83,6 @@
     const step = pow * ([1, 2, 5, 10].find((s) => s * pow >= raw) ?? 10);
     const ticks: number[] = [];
     for (let k = 0; k <= total + 1e-6; k += step) ticks.push(Math.round(k * 10) / 10);
-    // Minimum pixel gap kept clear before the right-anchored total label.
     const MIN_END_GAP = 28;
     const endX = chart.x(endKm);
     return ticks.filter((km) => km === 0 || endX - chart.x(km) > MIN_END_GAP);
@@ -112,7 +97,6 @@
     return di;
   };
 
-  // The crosshair, driven by whichever side set the shared hover.
   const cross = $derived.by(() => {
     if (hover.distanceKm == null) return null;
     const km = Math.min(Math.max(hover.distanceKm, 0), elevation.totalKm);
@@ -126,13 +110,12 @@
     };
   });
 
-  // The day the crosshair currently sits in, so its name label can light up.
   const activeDay = $derived(cross ? dayIndexAt(cross.km) : null);
 
-  // One name label per day, laid out in the bottom band. Positioned in CSS pixels
-  // (left/width) spanning the day's segment so the text truncates to fit it; the
-  // colour ties each label to its route. Days with no distance (degenerate GPX)
-  // are skipped so they don't stack a zero-width label at the origin.
+  /**
+   * Places each day's title over its own stretch of the chart. Days of zero
+   * length are skipped, as their labels would stack up at the origin.
+   */
   const dayLabels = $derived.by(() => {
     if (!days) return [];
     return days.flatMap((d, i) => {
@@ -152,8 +135,10 @@
     });
   });
 
-  // Cursor x (client coords) → trip distance. Read the geometry off the SVG's own
-  // rect so a child <path> under the cursor can't skew the offset.
+  /**
+   * Turns a pointer's client x into a distance along the trip in km. Measures the
+   * SVG's own rect, as a child <path> under the cursor would skew the offset.
+   */
   const kmAtClientX = (clientX: number): number | null => {
     if (!svgEl) return null;
     const x = clientX - svgEl.getBoundingClientRect().left;
@@ -161,7 +146,7 @@
     return Math.min(Math.max(km, 0), elevation.totalKm);
   };
 
-  // Pointer → distance, rAF-throttled.
+  // Coalesces pointermove into one hover write per frame.
   let raf: number | null = null;
   let pendingX: number | null = null;
   const onMove = (e: PointerEvent) => {
@@ -187,16 +172,13 @@
   };
 </script>
 
-<!-- ~1/6 of the map height, clamped; a dark scrim + blur keeps it legible over
-     satellite imagery. bind:clientWidth/Height feed the SVG scales. -->
 <div
   class="absolute inset-x-0 bottom-0 z-30 h-[22%] max-h-[190px] min-h-[110px] border-t border-white/15 bg-black/55 text-white backdrop-blur-sm"
   bind:clientWidth={w}
   bind:clientHeight={h}
 >
   {#if hasData}
-    <!-- Interaction is inherently position-based (hover/click map to a distance
-         along the route), like a canvas — no keyboard equivalent applies. -->
+    <!-- Ignoring because interaction is pointer-only. -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <svg
@@ -210,12 +192,10 @@
       onpointerleave={onLeave}
       onclick={onClick}
     >
-      <!-- day boundaries -->
       {#each dayBoundaries as bx (bx)}
         <line x1={bx} x2={bx} y1={PAD.top} y2={chart.baseY} stroke="white" stroke-opacity="0.15" />
       {/each}
 
-      <!-- per-day area + line -->
       {#each dayPaths as g (g.dayIndex)}
         <path d={g.area} fill={dayColor(g.dayIndex)} fill-opacity="0.22" />
         <path
@@ -228,7 +208,6 @@
         />
       {/each}
 
-      <!-- elevation min/max labels -->
       <text x="6" y={PAD.top + 5} class="fill-white text-[13px] font-medium"
         >{Math.round(elevation.maxElevationM)} m</text
       >
@@ -236,13 +215,11 @@
         >{Math.round(elevation.minElevationM)} m</text
       >
 
-      <!-- distance ticks -->
       {#each kmTicks as km (km)}
         <text x={chart.x(km)} y={chartH - 5} text-anchor="middle" class="fill-white/70 text-[10px]"
           >{km} km</text
         >
       {/each}
-      <!-- total distance, pinned to the right end like the 0 km origin. -->
       {#if endKm > 0}
         <text
           x={chart.x(endKm)}
@@ -252,7 +229,6 @@
         >
       {/if}
 
-      <!-- crosshair -->
       {#if cross}
         <line
           x1={cross.cx}
@@ -283,9 +259,6 @@
       {/if}
     </svg>
 
-    <!-- Day-name strip along the bottom. HTML (not SVG) so each label truncates
-         to its segment width with an ellipsis. pointer-events-none keeps the whole
-         overlay a single hover surface for the chart above. -->
     <div
       class="pointer-events-none absolute inset-x-0 bottom-0 select-none"
       style="height: {LABEL_BAND}px"

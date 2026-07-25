@@ -6,7 +6,6 @@
     lnglat: maplibregl.LngLatLike;
     index: number;
     color: string;
-    /** The day's title, revealed in the pill that slides out on hover. */
     name?: string;
     onhover?: (index: number) => void;
     onleave?: () => void;
@@ -18,9 +17,8 @@
 
 <Marker {lnglat}>
   {#snippet content()}
-    <!-- The circle is the marker's layout box, so maplibre keeps it pinned on the
-         coordinate. The name pill is absolutely positioned off its right edge and
-         so never shifts the anchor as it expands. -->
+    <!-- The name pill sits outside this div's box: widening the box on hover would
+         move the point maplibre centres the marker on. -->
     <div class="group relative">
       <button
         class="relative z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 bg-white text-xs font-bold text-gray-700 shadow-sm transition-transform group-hover:scale-110"
