@@ -3,6 +3,13 @@ import type { Image } from '$lib/components/map/types';
 
 const HOST = 'https://photos.mogdan.xyz';
 
+/** Builds the URL of one asset's thumbnail at the given size. */
+export const thumbnailUrl = (id: string, size: string, shareKey: string) =>
+  `${HOST}/api/assets/${id}/thumbnail?size=${size}&key=${shareKey}`;
+
+/** Builds the URL of an album's public share page. */
+export const albumShareUrl = (shareKey: string) => `${HOST}/share/${shareKey}`;
+
 /**
  * Converts Immich assets into the Image shape the map uses, building the thumbnail,
  * preview and full-size URLs from `shareKey`.
@@ -11,8 +18,7 @@ export const parseAssets = async (
   asssets: AssetResponseDto[],
   shareKey: string
 ): Promise<Image[]> => {
-  const thumb = (id: string, size: string) =>
-    `${HOST}/api/assets/${id}/thumbnail?size=${size}&key=${shareKey}`;
+  const thumb = (id: string, size: string) => thumbnailUrl(id, size, shareKey);
   const playback = (id: string) => `${HOST}/api/assets/${id}/video/playback?key=${shareKey}`;
   const original = (id: string) => `${HOST}/api/assets/${id}/original?key=${shareKey}`;
 

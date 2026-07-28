@@ -11,6 +11,12 @@
     zoom?: number;
     /** Collapses the attribution to a single button, for maps with no room for it. */
     compactAttribution?: boolean;
+    /** Set false for a still map: no pan, zoom, rotate or keyboard handlers. */
+    interactive?: boolean;
+    /** Space left between the fitted route and the map's edges, in px. */
+    fitPadding?: number;
+    /** How far `bounds` may zoom in, so a short route doesn't fill the screen. */
+    fitMaxZoom?: number;
     map?: maplibregl.Map;
     children?: Snippet;
   }
@@ -36,6 +42,9 @@
     center = { lng: -120, lat: 40 },
     zoom = 4,
     compactAttribution = false,
+    interactive = true,
+    fitPadding = 40,
+    fitMaxZoom = 12,
     map = $bindable(),
     children
   }: Props = $props();
@@ -44,7 +53,7 @@
     if (!map || !bounds) return;
 
     const doFit = () => {
-      map!.fitBounds(bounds!, { padding: 40, maxZoom: 12 });
+      map!.fitBounds(bounds!, { padding: fitPadding, maxZoom: fitMaxZoom });
     };
 
     if (map.loaded()) {
@@ -61,6 +70,7 @@
   {cursor}
   {zoom}
   {center}
+  {interactive}
   attributionControl={compactAttribution ? { compact: true } : undefined}
   class="h-full"
   style={satelliteWithRoads}

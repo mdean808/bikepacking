@@ -29,6 +29,26 @@ export type TripMeta = {
 
 export type Trip = Omit<TripMeta, 'days'> & { days: Day[] };
 
+/** One day of a trip as the index page's card draws it: a thinned line and its length. */
+export type TripCardDay = {
+  title: string;
+  distanceKm: number;
+  line: [number, number][];
+};
+
+/** A trip reduced to what the index page shows, built by its server load. */
+export type TripCard = {
+  name: string;
+  slug: string;
+  description: string;
+  date: Date;
+  totalKm: number;
+  days: TripCardDay[];
+  /** [minLng, minLat, maxLng, maxLat], or null for a trip with no track. */
+  bounds: [number, number, number, number] | null;
+  album: { url: string; cover: string | null; photoCount: number };
+};
+
 export const TRIPS: TripMeta[] = [
   {
     name: 'Haida Gwaii',
@@ -62,7 +82,7 @@ export const TRIPS: TripMeta[] = [
   },
   {
     name: 'Vancouver Island',
-    slug: 'vancouver-island-24',
+    slug: 'vancouver-island',
     description: 'Bikepacking trip on Vancouver Island',
     date: new Date('2024-09-01'),
     album: 'b8ebd30d-a640-4ea8-9a81-9d5875cf1120',

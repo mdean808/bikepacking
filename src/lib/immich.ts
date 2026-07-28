@@ -1,6 +1,7 @@
 import { IMMICH_URL, IMMICH_API_KEY } from '$env/static/private';
 import {
   createSharedLink,
+  getAlbumInfo,
   getAllSharedLinks,
   init,
   searchAssets,
@@ -27,6 +28,17 @@ export const getAlbumShareKey = async (albumId: string): Promise<string> => {
       }
     }));
   return link.key;
+};
+
+/**
+ * Returns how many assets an album holds and which one Immich uses as its cover.
+ * The cover is null for an empty album.
+ */
+export const getAlbumCover = async (
+  albumId: string
+): Promise<{ assetCount: number; coverAssetId: string | null }> => {
+  const album = await getAlbumInfo({ id: albumId });
+  return { assetCount: album.assetCount, coverAssetId: album.albumThumbnailAssetId };
 };
 
 const paginateAlbumAssets = async (id: string, page: number = 1) => {
