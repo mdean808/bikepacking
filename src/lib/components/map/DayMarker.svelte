@@ -15,7 +15,8 @@
   let { lnglat, index, color, name, onhover, onleave, onselect }: Props = $props();
 </script>
 
-<Marker {lnglat}>
+<!-- Above every photo marker, so a day's start is never buried under photos. -->
+<Marker class="z-30" {lnglat}>
   {#snippet content()}
     <div class="group relative">
       <button

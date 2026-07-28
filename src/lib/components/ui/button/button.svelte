@@ -13,7 +13,7 @@
         outline:
           'bg-background hover:bg-accent hover:text-accent-foreground dark:bg-[color-mix(in_oklch,var(--input)_30%,var(--background))] dark:border-input dark:hover:bg-[color-mix(in_oklch,var(--input)_50%,var(--background))] border shadow-md',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-md',
-        ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
+        ghost: 'border-white/15 bg-black/55 text-white backdrop-blur-sm hover:bg-black/70',
         link: 'underline-offset-4 hover:underline'
       },
       size: {

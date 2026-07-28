@@ -5,7 +5,12 @@
 
   interface Props {
     cursor?: string;
+    /** Fits the camera to this box. Leave unset to hold `center` and `zoom` instead. */
     bounds?: [number, number, number, number] | null;
+    center?: maplibregl.LngLatLike;
+    zoom?: number;
+    /** Collapses the attribution to a single button, for maps with no room for it. */
+    compactAttribution?: boolean;
     map?: maplibregl.Map;
     children?: Snippet;
   }
@@ -25,7 +30,15 @@
     layers: [{ id: 'google-hybrid', type: 'raster', source: 'google-hybrid' }]
   };
 
-  let { cursor = '', bounds = null, map = $bindable(), children }: Props = $props();
+  let {
+    cursor = '',
+    bounds = null,
+    center = { lng: -120, lat: 40 },
+    zoom = 4,
+    compactAttribution = false,
+    map = $bindable(),
+    children
+  }: Props = $props();
 
   $effect(() => {
     if (!map || !bounds) return;
@@ -46,8 +59,9 @@
 <MapLibre
   bind:map
   {cursor}
-  zoom={4}
-  center={{ lng: -120, lat: 40 }}
+  {zoom}
+  {center}
+  attributionControl={compactAttribution ? { compact: true } : undefined}
   class="h-full"
   style={satelliteWithRoads}
 >

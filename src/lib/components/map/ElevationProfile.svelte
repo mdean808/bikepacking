@@ -2,20 +2,29 @@
   import { dayColor } from '$lib/geo';
   import { elevationAtDistance, type ElevationPoint, type TripElevation } from '$lib/elevation';
   import type { RouteHoverState } from './routeHover.svelte.js';
+  import type { ProfileCluster } from './types';
 
   interface Props {
     elevation: TripElevation;
     hover: RouteHoverState;
     days?: { title: string; description: string }[];
+    clusters?: ProfileCluster[];
     oncenter?: (distanceKm: number) => void;
   }
 
-  let { elevation, hover, days, oncenter }: Props = $props();
+  let { elevation, hover, days, clusters, oncenter }: Props = $props();
 
   /** Inset in px around the plot, leaving room for the axis labels. */
   const PAD = { top: 14, right: 14, bottom: 18, left: 48 };
   /** Height in px of the day-name strip below the chart. */
   const LABEL_BAND = 22;
+  /** Radius in px of a cluster dot at rest, and once hovered. */
+  const DOT_R = 6;
+  const DOT_HOVER_R = 16;
+  /** Narrowest span in px worth drawing a band for. */
+  const MIN_SPAN_PX = 4;
+  /** How long a dot takes to open, in ms. Paired with the CSS at the foot of the file. */
+  const DOT_OPEN_MS = 220;
 
   let w = $state(0);
   let h = $state(0);
@@ -112,6 +121,34 @@
 
   const activeDay = $derived(cross ? dayIndexAt(cross.km) : null);
 
+  let hoveredCluster = $state<string | null>(null);
+  /** Scopes the clip path to this component, so a second profile can't reuse it. */
+  const uid = $props.id();
+  const faceClip = `${uid}-face`;
+
+  /**
+   * Cluster dots sitting on the curve. Sorted widest span first so the small,
+   * precise dots end up drawn on top of the broad ones and stay clickable.
+   */
+  const placedClusters = $derived.by(() => {
+    if (!clusters) return [];
+    return clusters
+      .flatMap((c) => {
+        const m = elevationAtDistance(elevation, c.distanceKm);
+        if (m == null) return [];
+        return [
+          {
+            ...c,
+            cx: chart.x(c.distanceKm),
+            cy: chart.y(m),
+            spanX: chart.x(c.fromKm),
+            spanW: chart.x(c.toKm) - chart.x(c.fromKm)
+          }
+        ];
+      })
+      .sort((a, b) => b.spanW - a.spanW);
+  });
+
   /**
    * Places each day's title over its own stretch of the chart. Days of zero
    * length are skipped, as their labels would stack up at the origin.
@@ -174,6 +211,7 @@
 
 <div
   class="absolute inset-x-0 bottom-0 z-30 h-[22%] max-h-47.5 min-h-27.5 border-t border-white/15 bg-black/55 text-white backdrop-blur-sm"
+  style="--dot-open: {DOT_OPEN_MS}ms"
   bind:clientWidth={w}
   bind:clientHeight={h}
 >
@@ -254,6 +292,96 @@
           >{cross.km.toFixed(1)} km{cross.m != null ? ` · ${Math.round(cross.m)} m` : ''}</text
         >
       {/if}
+
+      <defs>
+        <!-- One clip per dot, its radius animating with the dot, so the photo is
+             revealed by the circle growing rather than appearing at full size. -->
+        {#each placedClusters as c (c.key)}
+          <clipPath id="{faceClip}-{c.key}">
+            <circle
+              class="dot-part"
+              cx="0"
+              cy="0"
+              r={hoveredCluster === c.key ? DOT_HOVER_R - 2 : DOT_R}
+            />
+          </clipPath>
+        {/each}
+      </defs>
+
+      {#each placedClusters as c (c.key)}
+        {@const active = hoveredCluster === c.key}
+        <!-- Photos close together on the map can be far apart along the route, so
+             hovering reveals the stretch this dot actually stands for. -->
+        <rect
+          class="dot-part"
+          x={c.spanX}
+          y={PAD.top}
+          width={c.spanW}
+          height={chart.baseY - PAD.top}
+          fill={c.color}
+          fill-opacity={active && c.spanW > MIN_SPAN_PX ? 0.2 : 0}
+          pointer-events="none"
+        />
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <g
+          transform="translate({c.cx.toFixed(1)},{c.cy.toFixed(1)})"
+          class="cursor-pointer"
+          onpointerenter={() => (hoveredCluster = c.key)}
+          onpointerleave={() => (hoveredCluster = null)}
+          onclick={(e) => {
+            // Otherwise the svg's own handler would also recentre on this km.
+            e.stopPropagation();
+            c.onselect();
+          }}
+        >
+          <!-- Hit area stays the expanded size at all times. Were it to grow with
+               the dot, the pointer would fall in and out of it mid-animation and
+               the dot would flicker. -->
+          <circle r={DOT_HOVER_R} fill="transparent" />
+
+          <g class="dot-part" style="opacity: {active ? 0 : 1}" pointer-events="none">
+            <circle
+              class="dot-part"
+              r={active ? DOT_HOVER_R : DOT_R}
+              fill={c.color}
+              stroke="white"
+              stroke-width="1.5"
+            />
+            <text text-anchor="middle" dy="2.5" class="fill-white text-[8px] font-bold"
+              >{c.count}</text
+            >
+          </g>
+
+          <g class="dot-part" style="opacity: {active ? 1 : 0}" pointer-events="none">
+            <circle class="dot-part" r={active ? DOT_HOVER_R : DOT_R} fill="black" />
+            <image
+              href={c.thumbnail}
+              x={-(DOT_HOVER_R - 2)}
+              y={-(DOT_HOVER_R - 2)}
+              width={(DOT_HOVER_R - 2) * 2}
+              height={(DOT_HOVER_R - 2) * 2}
+              clip-path="url(#{faceClip}-{c.key})"
+              preserveAspectRatio="xMidYMid slice"
+            />
+            <circle
+              class="dot-part"
+              r={active ? DOT_HOVER_R : DOT_R}
+              fill="none"
+              stroke={c.color}
+              stroke-width="2.5"
+            />
+            <circle cx={DOT_HOVER_R - 3} cy={DOT_HOVER_R - 3} r="8" fill={c.color} />
+            <text
+              x={DOT_HOVER_R - 3}
+              y={DOT_HOVER_R - 3}
+              text-anchor="middle"
+              dy="3"
+              class="fill-white text-[9px] font-bold">{c.count}</text
+            >
+          </g>
+        </g>
+      {/each}
     </svg>
 
     <div
@@ -274,3 +402,14 @@
     </div>
   {/if}
 </div>
+
+<style>
+  /* Drives the dot open and shut. `r` and `fill-opacity` are animatable SVG
+     geometry/paint properties; --dot-open is set on the container above. */
+  .dot-part {
+    transition:
+      r var(--dot-open) ease-out,
+      opacity var(--dot-open) ease-out,
+      fill-opacity var(--dot-open) ease-out;
+  }
+</style>

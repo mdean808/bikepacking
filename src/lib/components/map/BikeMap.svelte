@@ -22,14 +22,22 @@
   import { anchorOnRoute, buildTripElevation, pointAtDistance } from '$lib/elevation';
   import type * as maplibregl from 'maplibre-gl';
   import type { Feature, Point } from 'geojson';
-  import type { Image, PhotoAnchor } from './types';
+  import type { Image, PhotoAnchor, ProfileCluster } from './types';
   import Switch from '../ui/switch/switch.svelte';
   import Control from './Control.svelte';
 
   const { images, trip }: { images: Image[]; trip: Trip } = $props();
 
-  const CLUSTER_RADIUS = 50; // grouping distance of clusters in pixels
-  const CLUSTER_MAX_ZOOM = 14; // zoom past at which everything is no longer clustered
+  const CLUSTER_RADIUS = 60; // grouping distance of clusters in pixels
+  const CLUSTER_MAX_ZOOM = 16; // zoom past at which everything is no longer clustered
+  // The zoom the profile groups its photos at, independent of the camera: the
+  // dots stay put as the map moves. Lower merges more of them together.
+  const PROFILE_CLUSTER_ZOOM = 10;
+  // The zoom clicking a cluster on the map takes the camera to. Past
+  // CLUSTER_MAX_ZOOM, so the photo on its thumbnail ends up on its own marker.
+  const CLUSTER_SELECT_ZOOM = CLUSTER_MAX_ZOOM + 1;
+  // How long that flight takes, in ms. Longer is slower and easier to follow.
+  const CLUSTER_SELECT_MS = 1400;
 
   type PointProps = { image: Image };
   type PointFeature = Feature<Point, PointProps>;
@@ -39,9 +47,34 @@
   const hover = createHoverState();
   const routeHover = createRouteHover();
 
-  const control: {
-    hideImages: boolean;
-  } = $state({ hideImages: false });
+  /** How tall the per-day list may grow before it scrolls, in px. */
+  const DAY_LIST_MAX_H = 224;
+
+  /**
+   * The days whose photos are switched off. Held as the exceptions rather than a
+   * flag per day, so days start on and the list never has to track how many days
+   * the trip has.
+   */
+  const hiddenDays = $state<number[]>([]);
+
+  /** The master switch: on while any day is on, and flipping it sets every day. */
+  const anyDayShown = $derived(
+    hiddenDays.length === 0 || trip.days.some((_, i) => !hiddenDays.includes(i))
+  );
+
+  /** Photos that never anchored to a route sit at day -1 and follow the master. */
+  const dayShown = (day: number) => (day === -1 ? anyDayShown : !hiddenDays.includes(day));
+
+  const setDayShown = (day: number, shown: boolean) => {
+    const at = hiddenDays.indexOf(day);
+    if (shown && at !== -1) hiddenDays.splice(at, 1);
+    else if (!shown && at === -1) hiddenDays.push(day);
+  };
+
+  const setAllDays = (shown: boolean) => {
+    hiddenDays.length = 0;
+    if (!shown) for (let i = 0; i < trip.days.length; i++) hiddenDays.push(i);
+  };
 
   const elevation = $derived.by(() => buildTripElevation(trip.days.map((d) => d.geoJSON)));
 
@@ -154,6 +187,8 @@
 
         if (props.cluster) {
           const id = props.cluster_id as number;
+          // One of the cluster's photos, shown as its face.
+          const face = index.getLeaves(id, 1)[0]?.properties.image ?? null;
           return {
             kind: 'cluster',
             key: `cluster-${day}-${id}`,
@@ -161,14 +196,14 @@
             lng,
             lat,
             count: props.point_count as number,
-            // One of the cluster's photos, shown as its face.
-            face: index.getLeaves(id, 1)[0]?.properties.image ?? null,
-            // Zooming to where the cluster splits is what spreads it apart.
+            face,
+            // Flies to where the photo on the thumbnail was taken, not the
+            // cluster's centre, and close enough that it stands alone there.
             expand: () =>
               map?.easeTo({
-                center: [lng, lat],
-                zoom: index.getClusterExpansionZoom(id),
-                duration: 500
+                center: face?.loc ? [face.loc.lng, face.loc.lat] : [lng, lat],
+                zoom: CLUSTER_SELECT_ZOOM,
+                duration: CLUSTER_SELECT_MS
               })
           };
         }
@@ -181,6 +216,64 @@
 
   // Day -1 photos never anchored to a route, so they get no day colour.
   const markerColor = (day: number) => (day === -1 ? '#ffffff' : dayColor(day));
+
+  const distanceByImage = $derived(
+    new globalThis.Map(photoAnchors.map((a) => [a.image, a.distanceKm] as const))
+  );
+
+  // The profile draws the whole trip, so it asks for every cluster rather than
+  // only those in view — otherwise panning the map would empty the profile.
+  const WORLD_BBOX: [number, number, number, number] = [-180, -85, 180, 85];
+  /**
+   * Every photo group the profile draws, placed on its distance axis. The same
+   * per-day indexes back both views, but the profile queries them at a fixed
+   * zoom, so its dots hold still while the map's clusters merge and split.
+   * Lone photos are left off — one axis has no room for them.
+   */
+  const profileClusters = $derived.by<ProfileCluster[]>(() => {
+    return dayIndexes.flatMap(({ day, index }) => {
+      if (!dayShown(day)) return [];
+      return index
+        .getClusters(WORLD_BBOX, PROFILE_CLUSTER_ZOOM)
+        .flatMap((feature): ProfileCluster[] => {
+          const props = feature.properties as Partial<ClusterProps> & Partial<PointProps>;
+          // Checked before getLeaves, so lone photos cost nothing to skip.
+          if (!props.cluster) return [];
+          const count = props.point_count ?? 0;
+
+          const id = props.cluster_id as number;
+          const leaves = index.getLeaves(id, Infinity).map((l) => l.properties.image);
+
+          // Photos that never anchored have no distance, so no place on this axis.
+          const kms = leaves.flatMap((image) => {
+            const km = distanceByImage.get(image);
+            return km == null ? [] : [km];
+          });
+          if (!kms.length) return [];
+          kms.sort((a, b) => a - b);
+
+          const [lng, lat] = feature.geometry.coordinates;
+
+          return [
+            {
+              key: `cluster-${day}-${id}`,
+              color: markerColor(day),
+              distanceKm: kms[Math.floor(kms.length / 2)],
+              fromKm: kms[0],
+              toKm: kms[kms.length - 1],
+              count,
+              thumbnail: leaves[0].thumbnail,
+              onselect: () =>
+                map?.easeTo({
+                  center: [lng, lat],
+                  zoom: index.getClusterExpansionZoom(id),
+                  duration: 500
+                })
+            }
+          ];
+        });
+    });
+  });
 
   const centerOn = (distanceKm: number) => {
     const pt = pointAtDistance(elevation, distanceKm);
@@ -221,13 +314,44 @@
   };
 </script>
 
-<div class="relative h-[calc(100vh-200px)]">
+<div class="relative h-[calc(100vh-80px)] lg:h-[calc(100vh-200px)]">
   <Control>
-    <h2 class="text-center mx-auto border-b border-white">Map Settings</h2>
-    <ul class="flex gap-2 text-sm py-1">
+    <ul class="flex flex-col gap-2 text-sm py-1">
       <li class="flex gap-2 justify-between items-center w-full">
         <label for="images">Images</label>
-        <Switch class="border-white" id="images" bind:checked={control.hideImages} />
+        <Switch
+          class="border-white"
+          id="images"
+          checked={anyDayShown}
+          onCheckedChange={setAllDays}
+        />
+      </li>
+      <li>
+        <ul
+          class="ml-1 flex flex-col gap-1.5 border-l border-white/25 pl-3 text-xs text-white/80"
+          style="max-height: {DAY_LIST_MAX_H}px"
+        >
+          {#each trip.days as day, i (`${trip.name}-images-${i}`)}
+            <li class="flex gap-2 justify-between items-center w-full">
+              <label
+                class="flex min-w-0 items-center gap-1.5"
+                for="images-day-{i}"
+                title={day.title}
+              >
+                <span class="size-2 shrink-0 rounded-full" style="background-color: {dayColor(i)}"
+                ></span>
+                <span class="truncate">Day {i + 1}</span>
+              </label>
+              <Switch
+                class="border-white"
+                size="sm"
+                id="images-day-{i}"
+                checked={dayShown(i)}
+                onCheckedChange={(shown) => setDayShown(i, shown)}
+              />
+            </li>
+          {/each}
+        </ul>
       </li>
     </ul>
   </Control>
@@ -241,7 +365,7 @@
           lnglat={loc}
           count={marker.count}
           thumbnail={marker.face?.thumbnail ?? ''}
-          hidden={control.hideImages}
+          hidden={!dayShown(marker.day)}
           {dimmed}
           color={markerColor(marker.day)}
           onselect={marker.expand}
@@ -250,7 +374,7 @@
         <ImageMarker
           image={marker.image}
           {loc}
-          hidden={control.hideImages}
+          hidden={!dayShown(marker.day)}
           {dimmed}
           highlighted={hoveredImage === marker.image}
           color={markerColor(marker.day)}
@@ -300,7 +424,19 @@
     {/if}
   </Map>
 
-  <ElevationProfile {elevation} hover={routeHover} oncenter={centerOn} days={trip.days} />
+  <ElevationProfile
+    {elevation}
+    hover={routeHover}
+    oncenter={centerOn}
+    days={trip.days}
+    clusters={profileClusters}
+  />
 </div>
 
-<ImageModal bind:open={modalOpen} images={orderedImages} bind:index={modalIndex} />
+<ImageModal
+  bind:open={modalOpen}
+  images={orderedImages}
+  bind:index={modalIndex}
+  days={trip.days}
+  {dayByImage}
+/>
