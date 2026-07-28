@@ -8,7 +8,7 @@
   const heading = (title: string) => title.replace(/^day\s+\d+\s*[:.–-]\s*/i, '') || title;
 </script>
 
-<section class="px-6 pt-12 pb-20 sm:px-12 lg:px-30">
+<section class="px-6 pt-12 pb-20 max-w-5xl mx-auto">
   <h2 class="text-shadow-block mb-8 text-3xl font-bold tracking-[3px] text-hazy-ipa uppercase">
     Day by Day
   </h2>
