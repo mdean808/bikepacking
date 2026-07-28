@@ -1,6 +1,7 @@
 import { bbox } from '@turf/bbox';
 import type { FeatureCollection } from 'geojson';
 import type { Image } from '$lib/components/map/types';
+import type { Day } from '$lib/trips';
 
 /** Route colours, ordered so consecutive days never share a hue family. */
 export const DAY_COLORS = [
@@ -29,6 +30,33 @@ export const routeBounds = (fc: FeatureCollection): [number, number, number, num
  * otherwise be drawn on top of each other, hiding all but the last.
  */
 export const dayLineOffset = (i: number, total: number): number => (i - (total - 1) / 2) * 2;
+
+/**
+ * Returns the index of the day whose GPS track was recording at time `t`.
+ *
+ * Days that ran along the same road can't be told apart by position, so the clock
+ * decides instead. A time falling between two days — a photo taken at camp after
+ * the riding stopped — goes to the day that had just finished. A time before the
+ * trip started goes to its first day. Null when `t` is null or no day has a window.
+ *
+ * Assumes days run in chronological order, which is how `buildTrip` numbers them.
+ */
+export const dayIndexForTime = (days: Day[], t: number | null): number | null => {
+  if (t == null) return null;
+
+  let preceding: number | null = null;
+  let firstDated: number | null = null;
+
+  for (let i = 0; i < days.length; i++) {
+    const window = days[i].window;
+    if (!window) continue;
+    if (firstDated === null) firstDated = i;
+    if (t >= window.startedAt && t <= window.endedAt) return i;
+    if (t > window.endedAt) preceding = i;
+  }
+
+  return preceding ?? firstDated;
+};
 
 /**
  * Sorts images oldest first by capture time. Images with no timestamp go last,

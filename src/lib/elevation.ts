@@ -169,9 +169,13 @@ export const distanceAlongDay = (
 
 /**
  * Finds where an arbitrary point, such as a photo's geotag, sits on the route.
- * Searches every day for the nearest spot and returns that day, its cumulative
- * trip distance, the elevation there, and how far off the line the point was, so
- * callers can drop photos taken nowhere near the route.
+ * Returns the day it belongs to, its cumulative trip distance, the elevation
+ * there, and how far off the line the point was, so callers can drop photos taken
+ * nowhere near the route.
+ *
+ * Pass `dayIndex` when the day is already known — from the photo's timestamp, say
+ * — and only that day is searched. Without it every day is searched and the
+ * nearest wins, which mis-assigns points where two days run along the same road.
  *
  * Searches `dayLinesCoarse` rather than the full-resolution lines, as this runs
  * once per photo.
@@ -179,10 +183,17 @@ export const distanceAlongDay = (
 export const anchorOnRoute = (
   elev: TripElevation,
   lng: number,
-  lat: number
+  lat: number,
+  dayIndex: number | null = null
 ): { dayIndex: number; distanceKm: number; elevationM: number; offRouteKm: number } | null => {
+  // A day with no length has only a stub line, which would match nothing useful.
+  const candidates =
+    dayIndex !== null && elev.dayLengthsKm[dayIndex] > 0
+      ? [dayIndex]
+      : elev.dayLinesCoarse.map((_, i) => i);
+
   let best: { d: number; di: number; local: number } | null = null;
-  for (let di = 0; di < elev.dayLinesCoarse.length; di++) {
+  for (const di of candidates) {
     if (elev.dayLengthsKm[di] <= 0) continue;
     const snapped = nearestPointOnLine(elev.dayLinesCoarse[di], [lng, lat], {
       units: 'kilometers'

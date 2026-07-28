@@ -5,8 +5,16 @@ export type DayMeta = {
   description: string;
 };
 
+/** Epoch ms of the first and last point the day's GPS track recorded. */
+export type DayWindow = {
+  startedAt: number;
+  endedAt: number;
+};
+
 export type Day = DayMeta & {
   geoJSON: FeatureCollection;
+  /** Null when the day's GPX carried no timestamps. */
+  window: DayWindow | null;
 };
 
 export type TripMeta = {

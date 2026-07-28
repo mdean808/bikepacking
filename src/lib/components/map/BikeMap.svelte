@@ -1,10 +1,19 @@
 <script lang="ts">
   import type { Trip } from '$lib/trips';
-  import { dayColor, dayLineOffset, getRouteStart, orderImagesByTime, routeBounds } from '$lib/geo';
+  import {
+    dayColor,
+    dayIndexForTime,
+    dayLineOffset,
+    getRouteStart,
+    orderImagesByTime,
+    routeBounds
+  } from '$lib/geo';
+  import Supercluster from 'supercluster';
   import Map from './Map.svelte';
   import DayRoute from './DayRoute.svelte';
   import DayMarker from './DayMarker.svelte';
   import ImageMarker from './ImageMarker.svelte';
+  import ClusterMarker from './ClusterMarker.svelte';
   import ImageModal from './ImageModal.svelte';
   import ElevationProfile from './ElevationProfile.svelte';
   import HoverMarker from './HoverMarker.svelte';
@@ -12,7 +21,7 @@
   import { createRouteHover } from './routeHover.svelte.js';
   import { anchorOnRoute, buildTripElevation, pointAtDistance } from '$lib/elevation';
   import type * as maplibregl from 'maplibre-gl';
-  import Supercluster from 'supercluster';
+  import type { Feature, Point } from 'geojson';
   import type { Image, PhotoAnchor } from './types';
   import Switch from '../ui/switch/switch.svelte';
   import Control from './Control.svelte';
@@ -23,7 +32,9 @@
   const CLUSTER_MAX_ZOOM = 14; // zoom past at which everything is no longer clustered
 
   type PointProps = { image: Image };
-  type PointFeature = GeoJSON.Feature<GeoJSON.Point, PointProps>;
+  type PointFeature = Feature<Point, PointProps>;
+  /** The properties supercluster puts on a cluster, as opposed to a lone photo. */
+  type ClusterProps = { cluster: true; cluster_id: number; point_count: number };
 
   const hover = createHoverState();
   const routeHover = createRouteHover();
@@ -42,7 +53,11 @@
     images
       .flatMap((image) => {
         if (!image.loc) return [];
-        const a = anchorOnRoute(elevation, image.loc.lng, image.loc.lat);
+        // The clock picks the day, so photos on a road two days share aren't stolen
+        // by whichever line happens to run closer. Undated photos fall back to the
+        // nearest line across every day.
+        const day = dayIndexForTime(trip.days, image.takenAt);
+        const a = anchorOnRoute(elevation, image.loc.lng, image.loc.lat, day);
         return a ? [{ image, ...a }] : [];
       })
       .sort((a, b) => a.distanceKm - b.distanceKm)
@@ -52,30 +67,121 @@
     new globalThis.Map(photoAnchors.map((a) => [a.image, a.dayIndex] as const))
   );
 
-  const dayIndexes = $derived.by(() => {
-    const byDay = new globalThis.Map<number, PointFeature[]>();
-    for (const image of images) {
-      if (!image.loc) continue;
-      const day = dayByImage.get(image) ?? -1;
-      let features = byDay.get(day);
-      if (!features) byDay.set(day, (features = []));
-      features.push({
-        type: 'Feature',
-        properties: { image },
-        geometry: { type: 'Point', coordinates: [image.loc.lng, image.loc.lat] }
-      });
-    }
-    return [...byDay].map(([day, features]) => ({
+  /**
+   * Photos grouped by day and ordered along the route within each day. Day -1
+   * collects geotagged photos that never anchored to a route, so they still get a
+   * marker; `markerColor` draws them white rather than in a day's colour.
+   */
+  const imagesByDay = $derived.by(() => {
+    const byDay = new globalThis.Map<number, Image[]>();
+    const push = (day: number, image: Image) => {
+      let group = byDay.get(day);
+      if (!group) byDay.set(day, (group = []));
+      group.push(image);
+    };
+    // Anchored photos first, so each day's list comes out in route order.
+    for (const a of photoAnchors) push(a.dayIndex, a.image);
+    for (const image of images) if (image.loc && !dayByImage.has(image)) push(-1, image);
+    return byDay;
+  });
+
+  // One index per day, so a cluster never spans days and always has one colour.
+  const dayIndexes = $derived.by(() =>
+    [...imagesByDay].map(([day, group]) => ({
       day,
       index: new Supercluster<PointProps>({
         radius: CLUSTER_RADIUS,
         maxZoom: CLUSTER_MAX_ZOOM
-      }).load(features)
-    }));
-  });
+      }).load(
+        group.flatMap<PointFeature>((image) => {
+          const loc = image.loc;
+          if (!loc) return [];
+          return [
+            {
+              type: 'Feature',
+              properties: { image },
+              geometry: { type: 'Point', coordinates: [loc.lng, loc.lat] }
+            }
+          ];
+        })
+      )
+    }))
+  );
 
   let hoveredImage = $state<Image | null>(null);
   let map = $state<maplibregl.Map>();
+
+  // What the camera currently shows. Supercluster needs both to decide which
+  // photos have merged, so clusters re-form as the map moves.
+  let view = $state<{ bbox: [number, number, number, number]; zoom: number } | null>(null);
+
+  $effect(() => {
+    if (!map) return;
+    const m = map;
+    const read = () => {
+      const b = m.getBounds();
+      view = {
+        bbox: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()],
+        zoom: m.getZoom()
+      };
+    };
+    read();
+    m.on('move', read);
+    return () => {
+      m.off('move', read);
+    };
+  });
+
+  /**
+   * A marker to draw: either a cluster standing in for several photos, or a photo
+   * that nothing merged with. `key` is what the each block keys on, so a marker
+   * surviving a zoom keeps its DOM node and eases to its new spot instead of being
+   * torn down and rebuilt — which is what reads as clusters spreading apart.
+   */
+  type MapMarker = { key: string; day: number; lng: number; lat: number } & (
+    | { kind: 'cluster'; count: number; face: Image | null; expand: () => void }
+    | { kind: 'photo'; image: Image }
+  );
+
+  const markers = $derived.by<MapMarker[]>(() => {
+    const v = view;
+    if (!v) return [];
+
+    return dayIndexes.flatMap(({ day, index }) =>
+      index.getClusters(v.bbox, Math.round(v.zoom)).map((feature): MapMarker => {
+        const [lng, lat] = feature.geometry.coordinates;
+        const props = feature.properties as Partial<ClusterProps> & Partial<PointProps>;
+
+        if (props.cluster) {
+          const id = props.cluster_id as number;
+          return {
+            kind: 'cluster',
+            key: `cluster-${day}-${id}`,
+            day,
+            lng,
+            lat,
+            count: props.point_count as number,
+            // One of the cluster's photos, shown as its face.
+            face: index.getLeaves(id, 1)[0]?.properties.image ?? null,
+            // Zooming to where the cluster splits is what spreads it apart.
+            expand: () =>
+              map?.easeTo({
+                center: [lng, lat],
+                zoom: index.getClusterExpansionZoom(id),
+                duration: 500
+              })
+          };
+        }
+
+        const image = props.image as Image;
+        return { kind: 'photo', key: `image-${image.thumbnail}`, day, lng, lat, image };
+      })
+    );
+  });
+
+  // Day -1 photos never anchored to a route, so they get no day colour.
+  const markerColor = (day: number) => (day === -1 ? '#ffffff' : dayColor(day));
+
   const centerOn = (distanceKm: number) => {
     const pt = pointAtDistance(elevation, distanceKm);
     if (pt && map) map.easeTo({ center: [pt.lng, pt.lat], duration: 600 });
@@ -126,22 +232,32 @@
     </ul>
   </Control>
   <Map bind:map cursor={hover.cursor} {bounds}>
-    {#each images as image (image.thumbnail)}
-      {@const loc = image.loc}
-      <!-- Photos with no geotag get no marker, but are still in the lightbox. -->
-      {#if loc}
-        {@const imageDay = dayByImage.get(image)}
+    <!-- Photos with no geotag get no marker, but are still in the lightbox. -->
+    {#each markers as marker (marker.key)}
+      {@const loc = { lng: marker.lng, lat: marker.lat }}
+      {@const dimmed = hover.dayIndex !== null && hover.dayIndex !== marker.day}
+      {#if marker.kind === 'cluster'}
+        <ClusterMarker
+          lnglat={loc}
+          count={marker.count}
+          thumbnail={marker.face?.thumbnail ?? ''}
+          hidden={control.hideImages}
+          {dimmed}
+          color={markerColor(marker.day)}
+          onselect={marker.expand}
+        />
+      {:else}
         <ImageMarker
-          {image}
+          image={marker.image}
           {loc}
           hidden={control.hideImages}
-          dimmed={hover.dayIndex !== null && imageDay !== undefined && hover.dayIndex !== imageDay}
-          highlighted={hoveredImage === image}
-          color={imageDay !== undefined ? dayColor(imageDay) : '#ffffff'}
+          {dimmed}
+          highlighted={hoveredImage === marker.image}
+          color={markerColor(marker.day)}
           onselect={openImageModal}
           onhover={() => {
             hover.enterImage();
-            hoveredImage = image;
+            hoveredImage = marker.image;
           }}
           onleave={() => {
             hover.leaveImage();
