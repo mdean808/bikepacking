@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.trip.name} — Morgan's Bikepacking</title>
+  <title>{data.trip.name} — Bikepacking Trips</title>
   <meta name="description" content="" />
 </svelte:head>
 

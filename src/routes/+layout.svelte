@@ -1,6 +1,6 @@
 <script lang="ts">
   import './layout.css';
-  import favicon from '$lib/assets/favicon.svg';
+  import favicon from '$lib/assets/favicon.png';
   import { page } from '$app/state';
 
   let { children } = $props();
@@ -13,7 +13,7 @@
   <a href="/" class="mx-auto text-center">
     <h1 class="text-2xl lg:text-6xl uppercase w-fit mx-auto mb-3">
       {#if isHome}
-        Morgan's Bikepacking
+        Bikepacking Trips
       {:else}
         {page.url.pathname.split('/')[1].replace('-', ' ')}
       {/if}
