@@ -1,15 +1,30 @@
 <script lang="ts">
   import BikeMap from '$lib/components/map/BikeMap.svelte';
+  import Seo from '$lib/components/Seo.svelte';
   import TripJournal from '$lib/components/TripJournal.svelte';
+  import { tripDescription } from '$lib/seo';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
+
+  const description = $derived(
+    tripDescription({
+      description: data.trip.description,
+      days: data.trip.days,
+      totalKm: data.totalKm
+    })
+  );
 </script>
 
-<svelte:head>
-  <title>{data.trip.name} — Bikepacking Trips</title>
-  <meta name="description" content="" />
-</svelte:head>
+<Seo
+  title={data.trip.name}
+  {description}
+  path="/{data.trip.slug}"
+  ogSlug={data.trip.slug}
+  ogAlt="A map of the {data.trip.name} route, each day drawn in its own colour"
+  type="article"
+  publishedAt={new Date(data.trip.date).toISOString()}
+/>
 
 <BikeMap images={data.images} trip={data.trip} />
 <TripJournal trip={data.trip} />

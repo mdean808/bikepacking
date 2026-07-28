@@ -41,6 +41,10 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
+        # Social cards are rendered by `pnpm og` and committed under static/og/,
+        # so nothing here needs puppeteer's ~150MB Chrome download.
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Build Site

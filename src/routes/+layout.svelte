@@ -1,6 +1,5 @@
 <script lang="ts">
   import './layout.css';
-  import favicon from '$lib/assets/favicon.png';
   import { page } from '$app/state';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import { Copyright, ExternalLink } from '@lucide/svelte';
@@ -8,8 +7,6 @@
   let { children } = $props();
   const isHome = $derived(page.url.pathname === '/');
 </script>
-
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 <div class="px-0 gap-5">
   <a href="/" class="mx-auto text-center">

@@ -1,0 +1,24 @@
+{
+  "name": "Bikepacking Trips",
+  "short_name": "Bikepacking",
+  "description": "Bikepacking trip routes and geotagged photos, plotted day by day on a satellite map.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fbf9ef",
+  "theme_color": "#aa953a",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "592x592",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

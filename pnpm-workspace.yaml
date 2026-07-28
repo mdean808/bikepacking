@@ -1,2 +1,6 @@
 allowBuilds:
   '@tailwindcss/oxide': true
+  # Its install script fetches a Chrome build, which `pnpm og` renders the social
+  # cards in. The deploy workflow sets PUPPETEER_SKIP_DOWNLOAD so CI does not pay
+  # for a browser it never opens.
+  puppeteer: true

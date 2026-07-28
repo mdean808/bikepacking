@@ -10,8 +10,8 @@ Read this alongside the "Data flow" section of `CLAUDE.md`.
 ## The one constraint that drives everything
 
 `src/lib/immich.ts` reads `$env/static/private` and talks to Immich with an API
-key. That call can never happen in the browser, so it has to run *somewhere
-trusted*. The only real question is whether that somewhere is a CI runner that
+key. That call can never happen in the browser, so it has to run _somewhere
+trusted_. The only real question is whether that somewhere is a CI runner that
 exists for a minute, or a host that stays up.
 
 Everything else — the map, the modals, the hover coordination — is static assets
@@ -52,7 +52,7 @@ workflow. All of the below is from scratch.
 
 - `pnpm add -D @sveltejs/adapter-static`, then swap it for `adapter-auto` in
   `vite.config.ts`. Note it may already be present in `node_modules/` as a
-  leftover from an earlier attempt while *absent* from `package.json` — that
+  leftover from an earlier attempt while _absent_ from `package.json` — that
   works locally and breaks under CI's `pnpm install --frozen-lockfile`, so
   confirm it lands in `package.json`.
 - Create `src/routes/+layout.ts` with `export const prerender = true`
@@ -69,7 +69,7 @@ workflow. All of the below is from scratch.
   structurally identical to today's `?trip=`.
 - `export function entries()` in `+page.server.ts`, returning one object per
   trip. `/` is covered for free by the default `entries: ['*']`, which includes
-  routes with no *required* params.
+  routes with no _required_ params.
 - An explicit `slug` field on `TripMeta`. Deriving it from `name` means renaming
   a trip silently breaks every shared link, and `"Haida Gwaii"` needs encoding.
 - `kit.paths.base` set from a `BASE_PATH` env var **unless** the repo is
@@ -86,15 +86,39 @@ Do **not** set `fallback: '404.html'` on the adapter. With everything
 prerendered it's dead weight, and it downgrades "a route failed to prerender"
 from a loud build error into a silent client-side fetch in production.
 
+### Social cards
+
+The same constraint that makes Option A cheap rules out generating `og:image`
+per request the way `@vercel/og` does — there is no request. Every card has to
+be a file sitting in `build/` when `upload-pages-artifact` runs, and every URL
+in the head has to be absolute, because scrapers don't resolve relative paths
+(hence `SITE_URL` in `src/lib/seo.ts`).
+
+`scripts/og.ts` writes those files: `pnpm og` renders each trip's route over the
+OpenFreeMap Liberty basemap in headless Chrome and screenshots it to
+`static/og/<slug>.png`, plus a site-wide `default.png` and the Apple touch icon.
+Liberty is a _vector_ style — there is no static-image endpoint and no raster
+tiles — so turning it into a PNG needs a real GL renderer, which is why the
+script drives a browser rather than compositing tiles.
+
+It is deliberately **not** wired into `pnpm build`. The cards only change when a
+trip's GPX or name does, whereas the workflow also runs on `workflow_dispatch`
+just to pick up new photos; making every one of those runs download Chrome and
+fetch a few hundred tiles would make the common case slow and give it a way to
+fail on someone else's uptime. The deploy step sets `PUPPETEER_SKIP_DOWNLOAD` so
+CI never fetches a browser it doesn't open.
+
+So: after changing a route or renaming a trip, run `pnpm og` and commit the PNGs.
+
 ### Trade-offs
 
-| | |
-|---|---|
-| ✅ | No server, no cold starts, no bill, no scaling story |
-| ✅ | GPX parsing (~1.4s for 73,863 points) happens once in CI, never for a visitor |
-| ✅ | Immich only needs to be reachable from the CI runner at build time |
-| ⚠️ | **Photo data is frozen at build time.** Adding a photo to an album does nothing until you redeploy |
-| ⚠️ | Every trip's data is generated on every build, whether or not it changed |
+|     |                                                                                                    |
+| --- | -------------------------------------------------------------------------------------------------- |
+| ✅  | No server, no cold starts, no bill, no scaling story                                               |
+| ✅  | GPX parsing (~1.4s for 73,863 points) happens once in CI, never for a visitor                      |
+| ✅  | Immich only needs to be reachable from the CI runner at build time                                 |
+| ⚠️  | **Photo data is frozen at build time.** Adding a photo to an album does nothing until you redeploy |
+| ⚠️  | Every trip's data is generated on every build, whether or not it changed                           |
 
 The staleness is the only real cost. If it bites, add a `repository_dispatch`
 trigger or a nightly `schedule:` to the workflow — that's a few lines and
