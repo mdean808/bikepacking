@@ -14,6 +14,7 @@ export const parseAssets = async (
   const thumb = (id: string, size: string) =>
     `${HOST}/api/assets/${id}/thumbnail?size=${size}&key=${shareKey}`;
   const playback = (id: string) => `${HOST}/api/assets/${id}/video/playback?key=${shareKey}`;
+  const original = (id: string) => `${HOST}/api/assets/${id}/original?key=${shareKey}`;
 
   const clean: Image[] = asssets.map((a) => {
     const isVideo = a.type === AssetTypeEnum.Video;
@@ -28,6 +29,7 @@ export const parseAssets = async (
       thumbnail: thumb(a.id, 'thumbnail'),
       preview: thumb(a.id, 'preview'),
       fullsize: thumb(a.id, 'fullsize'),
+      original: original(a.id),
       ...(isVideo ? { video: playback(a.id) } : {})
     };
     return image;

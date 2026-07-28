@@ -2,7 +2,13 @@
   import panzoom from 'panzoom';
   import type { PanZoom } from 'panzoom';
   import { MediaQuery } from 'svelte/reactivity';
-  import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from '@lucide/svelte';
+  import {
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    ChevronUp,
+    ExternalLink
+  } from '@lucide/svelte';
   import * as Dialog from '$lib/components/ui/dialog/index.js';
   import { Button } from '$lib/components/ui/button/index.js';
   import type { Image } from './types';
@@ -225,7 +231,7 @@
   >
     <!-- A header band the close button can sit in, so it stops landing on the
          photo. It keeps its height when there is no count to show. -->
-    <div class="flex h-6 shrink-0 items-center">
+    <div class="flex h-6 shrink-0 items-center gap-1">
       <Dialog.Title class="text-sm tabular-nums text-gray-400">
         {#if images.length > 1}
           {index + 1} / {images.length}
@@ -233,6 +239,21 @@
           <span class="sr-only">Photo {index + 1} of {images.length}</span>
         {/if}
       </Dialog.Title>
+      {#if image}
+        <!-- The original file rather than the `fullsize` one on screen: this is the
+             way to the photo at the resolution it was shot at. -->
+        <Button
+          href={image.original}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="link"
+          class="size-6 text-gray-400 hover:text-gray-600"
+          aria-label="Open full resolution {isVideo ? 'video' : 'photo'} in a new tab"
+          title="Open full resolution in a new tab"
+        >
+          <ExternalLink class="size-3.5" />
+        </Button>
+      {/if}
     </div>
     {#if image}
       <!-- Sections sit straight in the dialog, with no wrapper between: `h-full`

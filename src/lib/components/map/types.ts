@@ -6,6 +6,8 @@ export interface Image {
   thumbnail: string;
   preview: string;
   fullsize: string;
+  /** The unresized source file, for opening the photo at its full resolution. */
+  original: string;
   video?: string;
 }
 
