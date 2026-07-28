@@ -11,7 +11,7 @@
 
 <div class="px-0 gap-5">
   <a href="/" class="mx-auto text-center">
-    <h1 class="text-6xl uppercase w-fit mx-auto mb-3">
+    <h1 class="text-2xl lg:text-6xl uppercase w-fit mx-auto mb-3">
       {#if isHome}
         Morgan's Bikepacking
       {:else}
