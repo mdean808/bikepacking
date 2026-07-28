@@ -31,14 +31,3 @@ export const absoluteUrl = (path: string): string => new URL(path, SITE_URL).hre
  * a file when the build is uploaded.
  */
 export const ogImagePath = (slug?: string): string => `/og/${slug ?? 'default'}.png`;
-
-/**
- * The one-line summary a trip's page, social card and sitemap all share, built
- * from the trip's own numbers so it says something the title does not.
- */
-export const tripDescription = (trip: {
-  description: string;
-  days: unknown[];
-  totalKm: number;
-}): string =>
-  `${trip.description} — ${trip.days.length} days, ${Math.round(trip.totalKm)} km, mapped day by day with geotagged photos.`;

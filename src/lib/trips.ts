@@ -53,7 +53,7 @@ export const TRIPS: TripMeta[] = [
   {
     name: 'Haida Gwaii',
     slug: 'haida-gwaii',
-    description: 'Bikepacking trip to Haida Gwaii',
+    description: 'Riding off the edge of the world.',
     date: new Date('2026-07-01'),
     album: '208dc9a4-e56a-4d97-b927-e661a0e1390e',
     gpx_folder: 'haida_gwaii',
@@ -83,7 +83,7 @@ export const TRIPS: TripMeta[] = [
   {
     name: 'Vancouver Island',
     slug: 'vancouver-island',
-    description: 'Bikepacking trip on Vancouver Island',
+    description: 'Exploring Vancouver Island and the Cowichan Valley.',
     date: new Date('2024-09-01'),
     album: 'b8ebd30d-a640-4ea8-9a81-9d5875cf1120',
     gpx_folder: 'van_island_24',
@@ -97,7 +97,7 @@ export const TRIPS: TripMeta[] = [
   {
     name: 'Seattle',
     slug: 'seattle',
-    description: 'Bikepacking trip around Seattle',
+    description: 'Riding to and from Seattle the long way.',
     date: new Date('2026-04-03'),
     album: '8ed198c4-3b08-4f78-ba13-04b4531a02dc',
     gpx_folder: 'seattle',

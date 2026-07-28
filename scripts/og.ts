@@ -19,7 +19,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer, { type Browser, type Page } from 'puppeteer';
 import { DAY_COLORS } from '../src/lib/geo.ts';
-import { OG_HEIGHT, OG_WIDTH, SITE_NAME, SITE_DESCRIPTION } from '../src/lib/seo.ts';
+import { OG_HEIGHT, OG_WIDTH, SITE_NAME } from '../src/lib/seo.ts';
 import { TRIPS } from '../src/lib/trips.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -279,7 +279,6 @@ const renderDefaultCard = async (page: Page) => {
       `<div class="sheet">
          <img class="mark" src="${WHEEL}" alt="">
          <div class="name">${SITE_NAME}</div>
-         <div class="tagline">${SITE_DESCRIPTION}</div>
        </div>`,
       `.sheet {
          position: absolute; inset: 0;
@@ -292,10 +291,6 @@ const renderDefaultCard = async (page: Page) => {
          font-family: 'League Spartan'; font-weight: 700; font-size: 92px; line-height: 1;
          text-transform: uppercase; letter-spacing: 4px; color: ${HAZY_IPA};
          text-shadow: ${blockShadow(7)};
-       }
-       .tagline {
-         font-family: 'DM Sans'; font-weight: 500; font-size: 27px; line-height: 1.45;
-         color: ${HAZY_950}; max-width: 820px; margin-top: 26px;
        }`
     ),
     { waitUntil: 'domcontentloaded' }
