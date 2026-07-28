@@ -54,7 +54,7 @@ export const TRIPS: TripMeta[] = [
     name: 'Haida Gwaii',
     slug: 'haida-gwaii',
     description: 'Bikepacking trip to Haida Gwaii',
-    date: new Date('2025-07-01'),
+    date: new Date('2026-07-01'),
     album: '208dc9a4-e56a-4d97-b927-e661a0e1390e',
     gpx_folder: 'haida_gwaii',
     days: [
