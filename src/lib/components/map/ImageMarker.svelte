@@ -7,6 +7,7 @@
     loc: { lng: number; lat: number };
     dimmed?: boolean;
     highlighted?: boolean;
+    hidden?: boolean;
     color?: string;
     onselect?: (image: Image) => void;
     onhover?: () => void;
@@ -18,6 +19,7 @@
     loc,
     dimmed = false,
     highlighted = false,
+    hidden = false,
     color = '#ffffff',
     onselect,
     onhover,
@@ -25,7 +27,7 @@
   }: Props = $props();
 </script>
 
-<Marker lnglat={loc}>
+<Marker class={hidden ? 'hidden' : 'transition-all'} lnglat={loc}>
   {#snippet content()}
     <button
       onclick={(e) => {

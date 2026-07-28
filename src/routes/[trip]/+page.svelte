@@ -11,11 +11,5 @@
   <meta name="description" content="" />
 </svelte:head>
 
-<div
-  class="flex-1 min-h-0 border-0 lg:border-2 border-neutral-600 relative bg-blue-100 overflow-hidden"
->
-  <BikeMap images={data.images} trip={data.trip} />
-</div>
-<div>
-  <TripJournal trip={data.trip} />
-</div>
+<BikeMap images={data.images} trip={data.trip} />
+<TripJournal trip={data.trip} />

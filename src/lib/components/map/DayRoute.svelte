@@ -7,11 +7,10 @@
     index: number;
     color: string;
     offset: number;
-    hovered?: boolean;
     dimmed?: boolean;
   }
 
-  let { data, index, color, offset, hovered = false, dimmed = false }: Props = $props();
+  let { data, index, color, offset, dimmed = false }: Props = $props();
 </script>
 
 <GeoJSONSource id="route-day-{index}" {data}>
@@ -19,7 +18,7 @@
     layout={{ 'line-join': 'round', 'line-cap': 'round' }}
     paint={{
       'line-color': color,
-      'line-width': hovered ? 6 : 4,
+      'line-width': 4,
       'line-offset': offset,
       'line-opacity': dimmed ? 0.4 : 1
     }}

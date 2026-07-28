@@ -12,12 +12,25 @@
   import { createRouteHover } from './routeHover.svelte.js';
   import { anchorOnRoute, buildTripElevation, pointAtDistance } from '$lib/elevation';
   import type * as maplibregl from 'maplibre-gl';
+  import Supercluster from 'supercluster';
   import type { Image, PhotoAnchor } from './types';
+  import Switch from '../ui/switch/switch.svelte';
+  import Control from './Control.svelte';
 
   const { images, trip }: { images: Image[]; trip: Trip } = $props();
 
+  const CLUSTER_RADIUS = 50; // grouping distance of clusters in pixels
+  const CLUSTER_MAX_ZOOM = 14; // zoom past at which everything is no longer clustered
+
+  type PointProps = { image: Image };
+  type PointFeature = GeoJSON.Feature<GeoJSON.Point, PointProps>;
+
   const hover = createHoverState();
   const routeHover = createRouteHover();
+
+  const control: {
+    hideImages: boolean;
+  } = $state({ hideImages: false });
 
   const elevation = $derived.by(() => buildTripElevation(trip.days.map((d) => d.geoJSON)));
 
@@ -38,6 +51,28 @@
   const dayByImage = $derived(
     new globalThis.Map(photoAnchors.map((a) => [a.image, a.dayIndex] as const))
   );
+
+  const dayIndexes = $derived.by(() => {
+    const byDay = new globalThis.Map<number, PointFeature[]>();
+    for (const image of images) {
+      if (!image.loc) continue;
+      const day = dayByImage.get(image) ?? -1;
+      let features = byDay.get(day);
+      if (!features) byDay.set(day, (features = []));
+      features.push({
+        type: 'Feature',
+        properties: { image },
+        geometry: { type: 'Point', coordinates: [image.loc.lng, image.loc.lat] }
+      });
+    }
+    return [...byDay].map(([day, features]) => ({
+      day,
+      index: new Supercluster<PointProps>({
+        radius: CLUSTER_RADIUS,
+        maxZoom: CLUSTER_MAX_ZOOM
+      }).load(features)
+    }));
+  });
 
   let hoveredImage = $state<Image | null>(null);
   let map = $state<maplibregl.Map>();
@@ -80,7 +115,16 @@
   };
 </script>
 
-<div class="relative h-full">
+<div class="relative h-[calc(100vh-200px)]">
+  <Control>
+    <h2 class="text-center mx-auto border-b border-white">Map Settings</h2>
+    <ul class="flex gap-2 text-sm py-1">
+      <li class="flex gap-2 justify-between items-center w-full">
+        <label for="images">Images</label>
+        <Switch class="border-white" id="images" bind:checked={control.hideImages} />
+      </li>
+    </ul>
+  </Control>
   <Map bind:map cursor={hover.cursor} {bounds}>
     {#each images as image (image.thumbnail)}
       {@const loc = image.loc}
@@ -90,6 +134,7 @@
         <ImageMarker
           {image}
           {loc}
+          hidden={control.hideImages}
           dimmed={hover.dayIndex !== null && imageDay !== undefined && hover.dayIndex !== imageDay}
           highlighted={hoveredImage === image}
           color={imageDay !== undefined ? dayColor(imageDay) : '#ffffff'}
@@ -114,7 +159,6 @@
         index={i}
         color={dayColor(i)}
         {offset}
-        hovered={hover.dayIndex === i}
         dimmed={hover.isDimmed(i)}
       />
 

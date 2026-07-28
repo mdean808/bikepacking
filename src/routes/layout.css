@@ -200,3 +200,7 @@ button {
     @apply font-sans;
   }
 }
+
+.maplibregl-ctrl-group {
+  background: unset !important;
+}
