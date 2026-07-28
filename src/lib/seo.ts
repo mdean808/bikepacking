@@ -8,10 +8,9 @@
  */
 export const SITE_URL = 'https://bikepacking.mogdan.xyz';
 
-export const SITE_NAME = 'Bikepacking Trips';
+export const SITE_NAME = "Morgan's Bikepacking";
 
-export const SITE_DESCRIPTION =
-  'Bikepacking trip routes and geotagged photos, plotted day by day on a satellite map.';
+export const SITE_DESCRIPTION = 'My bikepacking trip routes and photos, plotted on the map.';
 
 /** --color-hazy-ipa. Tints mobile browser chrome and the installed app's title bar. */
 export const THEME_COLOR = '#aa953a';

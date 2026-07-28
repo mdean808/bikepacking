@@ -3,6 +3,7 @@
   import { page } from '$app/state';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import { Copyright, ExternalLink } from '@lucide/svelte';
+  import { SITE_NAME } from '$lib/seo';
 
   let { children } = $props();
   const isHome = $derived(page.url.pathname === '/');
@@ -12,9 +13,9 @@
   <a href="/" class="mx-auto text-center">
     <h1 class="text-3xl lg:text-6xl uppercase w-fit mx-auto mb-3 mt-4">
       {#if isHome}
-        Bikepacking Trips
+        {SITE_NAME}
       {:else}
-        {page.url.pathname.split('/')[1].replace('-', ' ')}
+        {page.url.pathname.split('/')[1].replaceAll('-', ' ')}
       {/if}
     </h1>
   </a>

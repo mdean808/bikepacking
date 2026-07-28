@@ -11,7 +11,7 @@
   title={SITE_NAME}
   description={SITE_DESCRIPTION}
   path="/"
-  ogAlt="A bicycle wheel above the words Bikepacking Trips"
+  ogAlt="A bicycle wheel above the words {SITE_NAME}"
 />
 
 <ol class="mx-auto flex max-w-5xl flex-col gap-10 px-4 pt-4 pb-24 sm:px-8 sm:gap-14">
