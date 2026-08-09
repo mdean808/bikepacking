@@ -52,7 +52,7 @@ export type TripCard = {
 export const TRIPS: TripMeta[] = [
   {
     name: 'Vancouver Island Frankenroute',
-    slug: 'Frankenroute',
+    slug: 'frankenroute',
     description: 'A cobbled together journey around Vancouver Island',
     date: new Date('2026-08-05'),
     album: '43a36dd8-30e3-485b-a9cc-188ef2e07e97',
