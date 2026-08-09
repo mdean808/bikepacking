@@ -61,22 +61,22 @@ export const TRIPS: TripMeta[] = [
       {
         title: 'Day 1: Smoke on the Water',
         description:
-          'Starting the day right with some particulate matter, getting lost on the Trans Canada Trail, mechanicals, and getting the last campsite available, we made it to Lake Cowichan by the skin of our teeth.'
+          'Starting the day right with some particulate matter, getting lost on the Trans Canada Trail, and suffering mechanicals, we snagged the last available campsite and made it to Lake Cowichan by the skin of our teeth.'
       },
       {
         title: 'Day 2: A Lonely Doug Detour',
         description:
-          'Starting off strong with a chill gravel ascent, we then descended the technical forest service road fast and furious. With a quick stop to see the lonely doug (where everyone got mad at Morgan), we continued on to Port Renfrew for lunch, and then a brutal climb back towards Lake Cowichan.'
+          'Starting off strong with a chill gravel ascent, we then descended the technical forest service road fast and furious. With a quick stop to see Lonely Doug (where everyone got mad at Morgan), we continued on to Port Renfrew for lunch, and then a brutal climb back towards Lake Cowichan.'
       },
       {
-        title: 'Day 3: Try Not to Bike 100KM Challenge: Impossible',
+        title: 'Day 3: Try Not to Bike 100km Challenge: Impossible',
         description:
-          '"Taking it Easy" today, we rode out towards Salt Spring Island where we experienced the tragedy that is Ruckle Provincial Park in the summer. Unfortunately (or fortunately, depending on your point of view), Ruckle had no campsites, so we had to grind back towards Ganges and stay in town, accidentally accruing 100KM of distance.'
+          '"Taking it Easy" today, we rode out towards Salt Spring Island where we experienced the tragedy that is Ruckle Provincial Park in the summer. Unfortunately (or fortunately, depending on your point of view), Ruckle had no campsites, so we had to grind back towards Ganges and stay in town, accidentally accruing 100km of distance.'
       },
       {
         title: 'Day 4: Teleporting Our Way Home',
         description:
-          'With a Pan au Chocolate and Baguette for breakfast, we moseyed on over to the ferry terminal for our trip back to the mainland, where the 900 Bike Bus brought us almost home. With a final ride down the Arbust Greenway, we finished off with a stop at Rain or Shine Ice Cream and a dip at Jericho.'
+          'With a pain au chocolat and baguette for breakfast, we moseyed on over to the ferry terminal for our trip back to the mainland, where the 900 Bike Bus brought us almost home. With a final ride down the Arbutus Greenway, we finished off with a stop at Rain or Shine Ice Cream and a dip at Jericho.'
       }
     ]
   },
